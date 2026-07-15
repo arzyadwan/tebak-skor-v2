@@ -19,6 +19,8 @@ let adminPin = "";
 let outcomeChartInstance = null;
 let autoSyncTimer = null;
 let countdownTimer = null;
+let localScrollList = [];
+let scrollInterval = null;
 
 // INIT APPLICATION FOR SPECIFIC PAGE
 document.addEventListener("DOMContentLoaded", () => {
@@ -370,6 +372,12 @@ async function onMatchChangedPublic() {
     if (dropdown && dropdown.value) {
         selectedMatchId = parseInt(dropdown.value);
     }
+    // Clear scroll list state to trigger rebuild
+    localScrollList = [];
+    if (scrollInterval) {
+        clearInterval(scrollInterval);
+        scrollInterval = null;
+    }
     await refreshActivePageData();
 }
 
@@ -436,16 +444,15 @@ function renderPublicView() {
         return new Date(a.created_at) - new Date(b.created_at);
     });
 
-    // 3. Render Leaderboard Table
-    document.getElementById("screen-total-predictions").textContent = `${scoredPredictions.length} Tebakan`;
-    
+    // 3. Render Top 5 Leaderboard (Right Column)
+    const top5 = scoredPredictions.slice(0, 5);
     const listBody = document.getElementById("leaderboard-list");
     listBody.innerHTML = "";
 
-    if (scoredPredictions.length === 0) {
-        listBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">Belum ada data tebakan.</td></tr>`;
+    if (top5.length === 0) {
+        listBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">Belum ada data peringkat.</td></tr>`;
     } else {
-        scoredPredictions.forEach((pred, index) => {
+        top5.forEach((pred, index) => {
             const rank = index + 1;
             let rankClass = "rank-other";
             let trophy = "";
@@ -462,8 +469,6 @@ function renderPublicView() {
             const tr = document.createElement("tr");
             if (highlightClass) tr.className = highlightClass;
 
-            const timeStr = new Date(pred.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
             tr.innerHTML = `
                 <td><span class="rank-badge ${rankClass}">${rank}</span></td>
                 <td>
@@ -478,17 +483,111 @@ function renderPublicView() {
                         ${status === 'PENDING' ? '-' : (pred.error === 0 ? 'Tepat' : `+${pred.error}`)}
                     </span>
                 </td>
-                <td class="text-muted text-xs">${timeStr}</td>
             `;
             listBody.appendChild(tr);
         });
     }
 
-    // 4. Render Analytics and Statistics Charts
+    // 4. Update Left Column: Predictions List & Auto-Scroll
+    document.getElementById("screen-total-predictions").textContent = `${predictionsList.length} Tebakan`;
+
+    // Only reset/re-init scroll if data length changes
+    if (localScrollList.length !== predictionsList.length) {
+        localScrollList = [...predictionsList];
+        initPredictionsScroll();
+    }
+
+    // 5. Render Analytics and Statistics Charts
     renderCharts(scoredPredictions);
 
-    // 5. Update Activity Feed Ticker
+    // 6. Update Activity Feed Ticker
     renderActivityTicker(predictionsList);
+}
+
+function initPredictionsScroll() {
+    const listBody = document.getElementById("predictions-scroll-list");
+    if (!listBody) return;
+
+    if (scrollInterval) {
+        clearInterval(scrollInterval);
+        scrollInterval = null;
+    }
+
+    renderScrollList();
+
+    if (localScrollList.length <= 10) {
+        listBody.style.transform = "none";
+        return;
+    }
+
+    // Scroll every 3 seconds
+    scrollInterval = setInterval(() => {
+        listBody.style.transition = "transform 0.8s ease-in-out";
+        listBody.style.transform = "translateY(-44px)"; // shift up by 1 row height (44px)
+
+        setTimeout(() => {
+            if (localScrollList.length > 10) {
+                // Shift first item to end
+                const first = localScrollList.shift();
+                localScrollList.push(first);
+                // Re-render
+                renderScrollList();
+            }
+            // Reset transform instantly
+            listBody.style.transition = "none";
+            listBody.style.transform = "translateY(0px)";
+        }, 800);
+    }, 3000);
+}
+
+function renderScrollList() {
+    const listBody = document.getElementById("predictions-scroll-list");
+    if (!listBody) return;
+
+    listBody.innerHTML = "";
+
+    if (localScrollList.length === 0) {
+        listBody.innerHTML = `<tr><td colspan="3" class="text-center text-muted py-4">Belum ada tebakan terdaftar.</td></tr>`;
+        return;
+    }
+
+    // Render 11 items (10 visible + 1 hidden at bottom to scroll in)
+    const itemsToRender = localScrollList.slice(0, 11);
+    const status = currentMatchData.status;
+    const scoreA = currentMatchData.score_a;
+    const scoreB = currentMatchData.score_b;
+
+    itemsToRender.forEach(pred => {
+        const error = Math.abs(pred.guess_a - scoreA) + Math.abs(pred.guess_b - scoreB);
+        let matchType = "";
+        if (error === 0) {
+            matchType = "exact";
+        } else if (Math.sign(pred.guess_a - pred.guess_b) === Math.sign(scoreA - scoreB)) {
+            matchType = "outcome";
+        }
+
+        let highlightClass = "";
+        if (status !== 'PENDING') {
+            if (matchType === 'exact') highlightClass = "match-exact";
+            else if (matchType === 'outcome') highlightClass = "match-outcome";
+        }
+
+        const tr = document.createElement("tr");
+        if (highlightClass) tr.className = highlightClass;
+
+        const timeStr = new Date(pred.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        tr.innerHTML = `
+            <td>
+                <div class="participant-name-cell">
+                    <span>${escapeHtml(pred.participant_name)}</span>
+                </div>
+            </td>
+            <td><span class="guess-score-badge">${pred.guess_a} - ${pred.guess_b}</span></td>
+            <td class="text-muted text-xs">${timeStr}</td>
+        `;
+        listBody.appendChild(tr);
+    });
 }
 
 function renderCharts(scoredPreds) {

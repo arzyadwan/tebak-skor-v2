@@ -1220,6 +1220,56 @@ button {
 }
 
 /* ==========================================================================
+   INFINITE AUTO-SCROLL & MINI TABLE STYLING
+   ========================================================================== */
+.predictions-scroll-container {
+    height: 440px; /* Fits exactly 10 rows of 44px */
+    overflow: hidden;
+    position: relative;
+    border-radius: var(--radius-md);
+    margin-top: 0.5rem;
+}
+
+#predictions-scroll-list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.predictions-scroll-container .leaderboard-table {
+    width: 100%;
+    table-layout: fixed; /* Keep column widths strictly identical during rotations */
+}
+
+/* Hard constraint on row height to align exactly 10 rows */
+.predictions-scroll-container tbody tr {
+    height: 44px !important;
+    max-height: 44px !important;
+}
+
+.predictions-scroll-container tbody td {
+    padding: 0.6rem 1rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Mini Table formatting for Top 5 panel */
+.mini-table th {
+    padding: 0.5rem 0.6rem !important;
+    font-size: 0.7rem !important;
+}
+
+.mini-table td {
+    padding: 0.5rem 0.6rem !important;
+    font-size: 0.85rem !important;
+}
+
+.mini-table tbody tr {
+    height: 38px !important;
+}
+
+/* ==========================================================================
    APP FOOTER
    ========================================================================== */
 .app-footer {

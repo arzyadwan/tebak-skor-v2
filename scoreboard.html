@@ -77,31 +77,31 @@
                 </div>
             </div>
 
-            <!-- Grid Layout: Leaderboard & Charts -->
+            <!-- Grid Layout: Left (Scrolling Predictions) & Right (Leaderboard + Chart) -->
             <div class="dashboard-grid">
                 
-                <!-- Leaderboard (Zinc Style Table) -->
+                <!-- Left: List of all guesses (Auto-Scrolling, Max 10 lines visible) -->
                 <div class="card-glow-wrapper grid-span-2">
                     <div class="glass-card h-full">
                         <div class="card-header border-bottom">
-                            <h3 class="card-title text-gold"><i class="fa-solid fa-ranking-star"></i> Papan Peringkat (Leaderboard)</h3>
+                            <h3 class="card-title text-neon"><i class="fa-solid fa-list-ul"></i> Daftar Tebakan Peserta</h3>
                             <span class="badge badge-neon-green" id="screen-total-predictions">0 Tebakan</span>
                         </div>
                         
-                        <div class="leaderboard-table-container">
+                        <!-- Fixed Height Auto-scroll container -->
+                        <div class="predictions-scroll-container" id="predictions-scroll-container">
                             <table class="leaderboard-table">
                                 <thead>
                                     <tr>
-                                        <th>Peringkat</th>
                                         <th>Peserta</th>
-                                        <th>Tebakan</th>
-                                        <th>Jarak Gol</th>
+                                        <th>Tebakan Skor</th>
                                         <th>Waktu Kirim</th>
                                     </tr>
                                 </thead>
-                                <tbody id="leaderboard-list">
+                                <tbody id="predictions-scroll-list">
+                                    <!-- Dynamic elements scroll via JS -->
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">Belum ada tebakan terdaftar.</td>
+                                        <td colspan="3" class="text-center text-muted py-4">Belum ada tebakan terdaftar.</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -109,33 +109,66 @@
                     </div>
                 </div>
 
-                <!-- Prediction Charts & Statistics -->
-                <div class="card-glow-wrapper">
-                    <div class="glass-card h-full">
-                        <div class="card-header border-bottom">
-                            <h3 class="card-title"><i class="fa-solid fa-chart-pie"></i> Analisis Hasil Tebakan</h3>
-                        </div>
-                        <div class="stats-panel-content">
-                            <div class="chart-container">
-                                <canvas id="outcome-chart"></canvas>
+                <!-- Right: Top 5 Leaderboard & Analytics Stack -->
+                <div class="flex-column gap-md">
+                    
+                    <!-- Top 5 Leaderboard -->
+                    <div class="card-glow-wrapper">
+                        <div class="glass-card">
+                            <div class="card-header border-bottom py-2">
+                                <h3 class="card-title text-gold"><i class="fa-solid fa-ranking-star"></i> Papan Peringkat (Top 5)</h3>
                             </div>
                             
-                            <div class="stats-cards-wrapper">
-                                <div class="mini-stat-card">
-                                    <span class="stat-lbl">Home Win</span>
-                                    <strong id="stat-home-pct" class="stat-val text-neon-green">0%</strong>
+                            <div class="leaderboard-table-container">
+                                <table class="leaderboard-table mini-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Rank</th>
+                                            <th>Peserta</th>
+                                            <th>Tebakan</th>
+                                            <th>Selisih</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leaderboard-list">
+                                        <!-- Top 5 items -->
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-4">Belum ada data.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Graph -->
+                    <div class="card-glow-wrapper">
+                        <div class="glass-card">
+                            <div class="card-header border-bottom py-2">
+                                <h3 class="card-title"><i class="fa-solid fa-chart-pie"></i> Analisis Tebakan</h3>
+                            </div>
+                            <div class="stats-panel-content">
+                                <div class="chart-container">
+                                    <canvas id="outcome-chart"></canvas>
                                 </div>
-                                <div class="mini-stat-card">
-                                    <span class="stat-lbl">Seri (Draw)</span>
-                                    <strong id="stat-draw-pct" class="stat-val text-muted">0%</strong>
-                                </div>
-                                <div class="mini-stat-card">
-                                    <span class="stat-lbl">Away Win</span>
-                                    <strong id="stat-away-pct" class="stat-val text-orange">0%</strong>
+                                
+                                <div class="stats-cards-wrapper">
+                                    <div class="mini-stat-card">
+                                        <span class="stat-lbl">Home Win</span>
+                                        <strong id="stat-home-pct" class="stat-val text-neon-green">0%</strong>
+                                    </div>
+                                    <div class="mini-stat-card">
+                                        <span class="stat-lbl">Seri (Draw)</span>
+                                        <strong id="stat-draw-pct" class="stat-val text-muted">0%</strong>
+                                    </div>
+                                    <div class="mini-stat-card">
+                                        <span class="stat-lbl">Away Win</span>
+                                        <strong id="stat-away-pct" class="stat-val text-orange">0%</strong>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
 
             </div>
