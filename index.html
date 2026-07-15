@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <title>Tebak Skor Bola v2 - Event Nobar Premium</title>
+    <meta name="description" content="Aplikasi interaktif tebak skor sepak bola untuk event nonton bareng (nobar). Tebak skor pertandingan secara real-time dan pantau leaderboard secara live!">
+    <meta name="author" content="Antigravity Developer">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph (Facebook / WhatsApp / Telegram) -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Tebak Skor Bola v2 - Event Nobar Premium">
+    <meta property="og:description" content="Prediksikan skor tim jagoanmu sebelum kick-off dan lihat peringkatmu di leaderboard secara real-time selama pertandingan!">
+    <meta property="og:image" content="https://media.api-sports.io/football/leagues/1.png">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Tebak Skor Bola v2 - Event Nobar Premium">
+    <meta name="twitter:description" content="Tebak skor pertandingan sepak bola real-time selama nobar. Siapa analis terbaik malam ini?">
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js and Supabase Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Premium Neon Grid Background -->
+    <div class="neon-grid"></div>
+    <div class="radial-glow"></div>
+
+    <!-- Main Navigation Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand-logo" id="brand-logo">
+                <i class="fa-solid fa-trophy text-gold"></i>
+                <span class="brand-text">TEBAK<span class="text-neon">SKOR</span><span class="text-badge">v2</span></span>
+            </div>
+            
+            <nav class="main-nav">
+                <button class="nav-tab active" id="btn-tab-participant" onclick="switchView('participant')">
+                    <i class="fa-solid fa-gamepad"></i> Tebak Skor
+                </button>
+                <button class="nav-tab" id="btn-tab-public" onclick="switchView('public')">
+                    <i class="fa-solid fa-desktop"></i> Layar Nobar
+                </button>
+                <button class="nav-tab" id="btn-tab-admin" onclick="switchView('admin')">
+                    <i class="fa-solid fa-user-gear"></i> Admin Panel
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- App Container -->
+    <main class="app-main">
+        
+        <!-- ============================================== -->
+        <!-- VIEW 1: PARTICIPANT (TEBAK SKOR)               -->
+        <!-- ============================================== -->
+        <section id="view-participant" class="app-view active">
+            <div class="view-container">
+                <div class="card-glow-wrapper">
+                    <div class="glass-card main-match-card">
+                        <div class="card-header">
+                            <span class="card-tag"><i class="fa-regular fa-clock"></i> Match Center</span>
+                            <div class="selector-wrapper">
+                                <label for="match-select-participant" class="sr-only">Pilih Pertandingan</label>
+                                <select id="match-select-participant" class="custom-select" onchange="onMatchChangedParticipant()">
+                                    <option value="">Memuat pertandingan...</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Dynamic Match Details -->
+                        <div id="participant-match-details" class="match-details-container">
+                            <div class="teams-display">
+                                <div class="team home">
+                                    <div class="logo-wrapper">
+                                        <span id="p-home-logo" class="team-logo">⚽</span>
+                                    </div>
+                                    <h3 id="p-home-name" class="team-name">Tim Kandang</h3>
+                                </div>
+                                
+                                <div class="match-info-center">
+                                    <div class="live-status-pill" id="p-match-status-badge">
+                                        <span class="status-dot"></span> <span id="p-match-status">PENDING</span>
+                                    </div>
+                                    <div class="match-time-elapsed" id="p-match-elapsed" style="display: none;">0'</div>
+                                    <div class="match-score-live" id="p-match-score-live" style="display: none;">0 - 0</div>
+                                    <div class="vs-text" id="p-match-vs">VS</div>
+                                    <div class="kickoff-countdown" id="p-kickoff-countdown">00:00:00</div>
+                                </div>
+                                
+                                <div class="team away">
+                                    <div class="logo-wrapper">
+                                        <span id="p-away-logo" class="team-logo">⚽</span>
+                                    </div>
+                                    <h3 id="p-away-name" class="team-name">Tim Tandang</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Tebakan (Form Input) -->
+                <div id="container-prediction-form" class="card-glow-wrapper margin-top-md">
+                    <div class="glass-card">
+                        <h2 class="card-title"><i class="fa-solid fa-circle-question"></i> Kirim Prediksi Anda</h2>
+                        <p class="card-subtitle">Isi nama Anda dan tebak skor pertandingan sebelum kick-off dimulai!</p>
+                        
+                        <form id="form-submit-prediction" onsubmit="submitPrediction(event)">
+                            <div class="input-group">
+                                <label for="input-nickname"><i class="fa-solid fa-user"></i> Nama / Nickname Anda</label>
+                                <input type="text" id="input-nickname" placeholder="Contoh: Andi_Arzatwan" required maxlength="25" autocomplete="off">
+                                <p class="input-helper">Nama ini akan ditampilkan di leaderboard layar publik.</p>
+                            </div>
+                            
+                            <div class="score-guesser-container">
+                                <div class="score-input-wrapper">
+                                    <span class="score-label" id="guess-label-home">Tim A</span>
+                                    <div class="stepper-input">
+                                        <button type="button" class="btn-step" onclick="adjustScore('input-guess-home', -1)"><i class="fa-solid fa-minus"></i></button>
+                                        <input type="number" id="input-guess-home" value="0" min="0" max="99" required>
+                                        <button type="button" class="btn-step" onclick="adjustScore('input-guess-home', 1)"><i class="fa-solid fa-plus"></i></button>
+                                    </div>
+                                </div>
+                                
+                                <div class="score-divider">:</div>
+                                
+                                <div class="score-input-wrapper">
+                                    <span class="score-label" id="guess-label-away">Tim B</span>
+                                    <div class="stepper-input">
+                                        <button type="button" class="btn-step" onclick="adjustScore('input-guess-away', -1)"><i class="fa-solid fa-minus"></i></button>
+                                        <input type="number" id="input-guess-away" value="0" min="0" max="99" required>
+                                        <button type="button" class="btn-step" onclick="adjustScore('input-guess-away', 1)"><i class="fa-solid fa-plus"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn-primary btn-glow" id="btn-submit-prediction">
+                                <i class="fa-solid fa-paper-plane"></i> Kirim Tebakan
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Resi Tebakan (Locked View if Voted) -->
+                <div id="container-prediction-success" class="card-glow-wrapper margin-top-md success-glow" style="display: none;">
+                    <div class="glass-card text-center">
+                        <div class="success-icon-wrapper">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                        <h2 class="card-title text-success">Tebakan Anda Tercatat!</h2>
+                        <p class="card-subtitle">Prediksi Anda telah dikunci dan tidak bisa diubah lagi. Semoga berhasil!</p>
+                        
+                        <div class="ticket-receipt">
+                            <div class="ticket-header">RESI PREDIKSI RESMI</div>
+                            <div class="ticket-body">
+                                <div class="ticket-row">
+                                    <span>Nama Peserta</span>
+                                    <strong id="receipt-name">-</strong>
+                                </div>
+                                <div class="ticket-row">
+                                    <span>Pertandingan</span>
+                                    <strong id="receipt-match">- vs -</strong>
+                                </div>
+                                <div class="ticket-row score-row">
+                                    <span>Prediksi Skor</span>
+                                    <strong id="receipt-score" class="text-neon-gold">0 : 0</strong>
+                                </div>
+                                <div class="ticket-row text-xs">
+                                    <span>Waktu Submit</span>
+                                    <span id="receipt-time">-</span>
+                                </div>
+                            </div>
+                            <div class="ticket-footer">ID: <span id="receipt-id">000000</span></div>
+                        </div>
+
+                        <button class="btn-secondary" onclick="sharePrediction()">
+                            <i class="fa-solid fa-share-nodes"></i> Bagikan Tebakan
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Match Locked Message -->
+                <div id="container-match-locked" class="card-glow-wrapper margin-top-md warning-glow" style="display: none;">
+                    <div class="glass-card text-center">
+                        <div class="lock-icon-wrapper">
+                            <i class="fa-solid fa-lock text-orange"></i>
+                        </div>
+                        <h2 class="card-title">Pendaftaran Tebakan Ditutup</h2>
+                        <p class="card-subtitle">Pertandingan ini telah dimulai atau waktu pendaftaran tebakan telah berakhir.</p>
+                        <p class="margin-top-sm">Silakan beralih ke halaman <strong>Layar Nobar</strong> untuk melihat performa tebakan peserta lain secara langsung!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- VIEW 2: PUBLIC SCOREBOARD (LAYAR NOBAR)       -->
+        <!-- ============================================== -->
+        <section id="view-public" class="app-view">
+            <div class="view-container wide-layout">
+                
+                <!-- Match Select for Screen -->
+                <div class="screen-controls-header">
+                    <div class="selector-wrapper flex-row align-center">
+                        <label for="match-select-public" class="text-gold bold margin-right-sm"><i class="fa-solid fa-tv"></i> Tampilkan Pertandingan:</label>
+                        <select id="match-select-public" class="custom-select max-w-300" onchange="onMatchChangedPublic()">
+                            <option value="">Memuat pertandingan...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Premium Jumbo Live Board -->
+                <div class="card-glow-wrapper margin-top-sm">
+                    <div class="glass-card jumbo-score-card">
+                        <div class="jumbo-header">
+                            <span id="screen-league-name" class="league-title">⚽ COMPETING LIVE</span>
+                            <div class="jumbo-status-badge" id="screen-status-badge">
+                                <span class="status-dot animate-pulse"></span> <span id="screen-match-status">PENDING</span>
+                            </div>
+                        </div>
+                        
+                        <div class="jumbo-body">
+                            <div class="jumbo-team home">
+                                <img id="screen-home-logo" src="https://media.api-sports.io/football/teams/10.png" alt="Logo Home" onerror="this.src='https://placehold.co/100x100/10141e/ffffff?text=HOME'">
+                                <h2 id="screen-home-name">ENGLAND</h2>
+                            </div>
+                            
+                            <div class="jumbo-score-display">
+                                <div class="jumbo-score-digital" id="screen-score-home">0</div>
+                                <div class="jumbo-score-divider">:</div>
+                                <div class="jumbo-score-digital" id="screen-score-away">0</div>
+                            </div>
+                            
+                            <div class="jumbo-team away">
+                                <img id="screen-away-logo" src="https://media.api-sports.io/football/teams/26.png" alt="Logo Away" onerror="this.src='https://placehold.co/100x100/10141e/ffffff?text=AWAY'">
+                                <h2 id="screen-away-name">ARGENTINA</h2>
+                            </div>
+                        </div>
+                        
+                        <div class="jumbo-footer">
+                            <div class="jumbo-time" id="screen-time-container">
+                                Menit Pertandingan: <span id="screen-elapsed-time" class="text-neon-green font-digital">0'</span>
+                            </div>
+                            <div class="jumbo-time" id="screen-countdown-container">
+                                Dimulai Dalam: <span id="screen-kickoff-countdown" class="text-neon-gold">00:00:00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leaderboard & Analytics Grid -->
+                <div class="dashboard-grid">
+                    
+                    <!-- Left: Leaderboard -->
+                    <div class="card-glow-wrapper grid-span-2">
+                        <div class="glass-card h-full">
+                            <div class="card-header border-bottom">
+                                <h3 class="card-title text-gold"><i class="fa-solid fa-ranking-star"></i> Papan Peringkat (Leaderboard)</h3>
+                                <span class="badge badge-neon-green" id="screen-total-predictions">0 Tebakan</span>
+                            </div>
+                            
+                            <div class="leaderboard-table-container">
+                                <table class="leaderboard-table" id="leaderboard-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Peringkat</th>
+                                            <th>Peserta</th>
+                                            <th>Tebakan Skor</th>
+                                            <th>Jarak Gol</th>
+                                            <th>Waktu Input</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leaderboard-list">
+                                        <!-- Table items loaded via JS -->
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-4">Belum ada data tebakan.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Statistics & Analysis -->
+                    <div class="card-glow-wrapper">
+                        <div class="glass-card h-full">
+                            <div class="card-header border-bottom">
+                                <h3 class="card-title"><i class="fa-solid fa-chart-pie"></i> Analisis Tebakan</h3>
+                            </div>
+                            <div class="stats-panel-content">
+                                <div class="chart-container">
+                                    <canvas id="outcome-chart"></canvas>
+                                </div>
+                                
+                                <div class="stats-cards-wrapper">
+                                    <div class="mini-stat-card">
+                                        <span class="stat-lbl">Tebakan Home Win</span>
+                                        <strong id="stat-home-pct" class="stat-val text-neon-green">0%</strong>
+                                    </div>
+                                    <div class="mini-stat-card">
+                                        <span class="stat-lbl">Tebakan Seri (Draw)</span>
+                                        <strong id="stat-draw-pct" class="stat-val text-muted">0%</strong>
+                                    </div>
+                                    <div class="mini-stat-card">
+                                        <span class="stat-lbl">Tebakan Away Win</span>
+                                        <strong id="stat-away-pct" class="stat-val text-orange">0%</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ticker Banner: Running predictions feed -->
+                <div class="ticker-wrapper card-glow-wrapper margin-top-md">
+                    <div class="glass-card ticker-card">
+                        <div class="ticker-label"><i class="fa-solid fa-bolt"></i> Live Feed:</div>
+                        <div class="ticker-track" id="ticker-track">
+                            <div class="ticker-item">Memuat aktivitas tebakan...</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- VIEW 3: ADMIN DASHBOARD                       -->
+        <!-- ============================================== -->
+        <section id="view-admin" class="app-view">
+            <div class="view-container">
+                
+                <!-- Admin Login Overlay -->
+                <div id="admin-login-card" class="card-glow-wrapper max-w-400 mx-auto py-5">
+                    <div class="glass-card text-center">
+                        <div class="admin-icon-wrapper">
+                            <i class="fa-solid fa-user-lock"></i>
+                        </div>
+                        <h2 class="card-title">Otentikasi Host Admin</h2>
+                        <p class="card-subtitle">Masukkan PIN Admin untuk masuk ke dashboard pengelolaan.</p>
+                        
+                        <form id="form-admin-login" onsubmit="loginAdmin(event)">
+                            <div class="input-group">
+                                <label for="input-admin-pin" class="sr-only">PIN Admin</label>
+                                <input type="password" id="input-admin-pin" placeholder="PIN Admin (Default: 1234)" required class="text-center font-digital tracking-widest text-lg" autocomplete="current-password">
+                            </div>
+                            <div id="admin-login-error" class="text-danger text-sm margin-bottom-sm bold" style="display: none;">PIN Admin Salah!</div>
+                            <button type="submit" class="btn-primary btn-glow w-full">
+                                <i class="fa-solid fa-unlock-keyhole"></i> Buka Dashboard
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Admin Dashboard Content (Initially Hidden) -->
+                <div id="admin-dashboard" style="display: none;">
+                    
+                    <div class="admin-top-bar glass-card margin-bottom-md">
+                        <div class="admin-title-area">
+                            <h2 class="card-title"><i class="fa-solid fa-screwdriver-wrench"></i> Admin Dashboard v2</h2>
+                            <p class="text-xs text-muted">Kelola pertandingan, sinkronisasi API, dan pantau tebakan nobar.</p>
+                        </div>
+                        <div class="admin-action-area">
+                            <button class="btn-danger btn-sm" onclick="logoutAdmin()">
+                                <i class="fa-solid fa-right-from-bracket"></i> Keluar (Logout)
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        
+                        <!-- Col 1: API Configuration & Match Creation -->
+                        <div class="flex-column gap-md">
+                            
+                            <!-- API Key Config -->
+                            <div class="card-glow-wrapper">
+                                <div class="glass-card">
+                                    <h3 class="card-title text-gold"><i class="fa-solid fa-key"></i> Konfigurasi API-Sports</h3>
+                                    
+                                    <div class="input-group">
+                                        <label for="input-api-key">API Key API-Football (V3)</label>
+                                        <input type="password" id="input-api-key" placeholder="Masukkan 32 Karakter API Key" autocomplete="off">
+                                    </div>
+                                    
+                                    <div class="flex-row gap-sm justify-between">
+                                        <button class="btn-secondary w-full" onclick="testApiKey()">
+                                            <i class="fa-solid fa-circle-nodes"></i> Tes Koneksi API
+                                        </button>
+                                        <button class="btn-primary w-full" onclick="saveApiKey()">
+                                            <i class="fa-solid fa-floppy-disk"></i> Simpan Key
+                                        </button>
+                                    </div>
+                                    <div id="api-status-msg" class="margin-top-sm bold text-sm text-center"></div>
+                                </div>
+                            </div>
+
+                            <!-- Create Match Form -->
+                            <div class="card-glow-wrapper">
+                                <div class="glass-card">
+                                    <h3 class="card-title text-gold"><i class="fa-solid fa-circle-plus"></i> Tambah Pertandingan Baru</h3>
+                                    
+                                    <form id="form-create-match" onsubmit="createMatch(event)">
+                                        <div class="form-row">
+                                            <div class="input-group">
+                                                <label for="input-match-teama">Nama Tim A (Home)</label>
+                                                <input type="text" id="input-match-teama" placeholder="Contoh: England" required>
+                                            </div>
+                                            <div class="input-group">
+                                                <label for="input-match-logoa">Logo Tim A (Emoji / URL)</label>
+                                                <input type="text" id="input-match-logoa" placeholder="Contoh: 🏴󠁧󠁢󠁥󠁮󠁧󠁿 atau URL" value="🏴󠁧󠁢󠁥󠁮󠁧󠁿">
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="form-row">
+                                            <div class="input-group">
+                                                <label for="input-match-teamb">Nama Tim B (Away)</label>
+                                                <input type="text" id="input-match-teamb" placeholder="Contoh: Argentina" required>
+                                            </div>
+                                            <div class="input-group">
+                                                <label for="input-match-logob">Logo Tim B (Emoji / URL)</label>
+                                                <input type="text" id="input-match-logob" placeholder="Contoh: 🇦🇷 atau URL" value="🇦🇷">
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="input-group">
+                                            <label for="input-match-kickoff">Waktu Kick-off (Batas Tebak)</label>
+                                            <input type="datetime-local" id="input-match-kickoff" required>
+                                        </div>
+
+                                        <div class="input-group">
+                                            <label for="input-match-api-id">API-Sports Fixture ID (Opsional)</label>
+                                            <input type="number" id="input-match-api-id" placeholder="Contoh: 1586077">
+                                            <p class="input-helper">Digunakan untuk melacak live-score secara otomatis dari API.</p>
+                                        </div>
+                                        
+                                        <button type="submit" class="btn-primary w-full">
+                                            <i class="fa-solid fa-plus"></i> Tambahkan Pertandingan
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Col 2: Live Match Controller & Match List -->
+                        <div class="flex-column gap-md grid-span-2">
+                            
+                            <!-- Live Controller -->
+                            <div class="card-glow-wrapper">
+                                <div class="glass-card admin-live-controller">
+                                    <h3 class="card-title text-gold"><i class="fa-solid fa-gamepad"></i> Pengendali Live Pertandingan</h3>
+                                    
+                                    <div class="selector-wrapper margin-bottom-sm">
+                                        <label for="match-select-admin" class="sr-only">Pilih Pertandingan Kelola</label>
+                                        <select id="match-select-admin" class="custom-select" onchange="onMatchChangedAdmin()">
+                                            <option value="">Pilih pertandingan untuk dikelola...</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div id="admin-match-manager-panel" class="match-manager-panel" style="display: none;">
+                                        
+                                        <div class="admin-score-editor">
+                                            <!-- Team A Score -->
+                                            <div class="admin-score-team home">
+                                                <span id="adm-team-a-logo" class="logo">🏴󠁧󠁢󠁥󠁮󠁧󠁿</span>
+                                                <h4 id="adm-team-a-name" class="name">England</h4>
+                                                <div class="score-modifier">
+                                                    <button class="btn-step" onclick="adjustAdminScore('adm-score-a', -1)"><i class="fa-solid fa-minus"></i></button>
+                                                    <input type="number" id="adm-score-a" value="0" min="0">
+                                                    <button class="btn-step" onclick="adjustAdminScore('adm-score-a', 1)"><i class="fa-solid fa-plus"></i></button>
+                                                </div>
+                                            </div>
+
+                                            <div class="score-colon">:</div>
+
+                                            <!-- Team B Score -->
+                                            <div class="admin-score-team away">
+                                                <span id="adm-team-b-logo" class="logo">🇦🇷</span>
+                                                <h4 id="adm-team-b-name" class="name">Argentina</h4>
+                                                <div class="score-modifier">
+                                                    <button class="btn-step" onclick="adjustAdminScore('adm-score-b', -1)"><i class="fa-solid fa-minus"></i></button>
+                                                    <input type="number" id="adm-score-b" value="0" min="0">
+                                                    <button class="btn-step" onclick="adjustAdminScore('adm-score-b', 1)"><i class="fa-solid fa-plus"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Status & Minute Control -->
+                                        <div class="admin-controls-grid">
+                                            <div class="input-group">
+                                                <label for="adm-match-status">Status Pertandingan</label>
+                                                <select id="adm-match-status" class="custom-select" onchange="onAdminStatusChanged()">
+                                                    <option value="PENDING">PENDING (Tebakan Terbuka)</option>
+                                                    <option value="LIVE">LIVE (Tebakan Terkunci)</option>
+                                                    <option value="FINISHED">FINISHED (Tebakan Selesai)</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="input-group">
+                                                <label for="adm-match-elapsed">Menit Berjalan (Elapsed)</label>
+                                                <input type="number" id="adm-match-elapsed" value="0" min="0" max="150">
+                                            </div>
+                                        </div>
+
+                                        <!-- API Sync Controller Panel -->
+                                        <div class="api-sync-panel border-top margin-top-md" id="adm-api-sync-container" style="display: none;">
+                                            <h4 class="section-title text-sm"><i class="fa-solid fa-rotate"></i> Sinkronisasi API-Sports (Fixture ID: <span id="adm-fixture-id-val">-</span>)</h4>
+                                            
+                                            <div class="flex-row justify-between align-center margin-bottom-sm">
+                                                <div class="checkbox-wrapper">
+                                                    <input type="checkbox" id="check-auto-sync" onchange="toggleAutoSync(this)">
+                                                    <label for="check-auto-sync">Aktifkan Auto-Sync (60 detik)</label>
+                                                </div>
+                                                <span class="text-xs text-muted" id="last-sync-time">Belum sinkron</span>
+                                            </div>
+                                            
+                                            <button class="btn-secondary w-full" id="btn-sync-now" onclick="syncScoreFromApiNow()">
+                                                <i class="fa-solid fa-cloud-arrow-down"></i> Tarik Skor Aktual Sekarang
+                                            </button>
+                                        </div>
+
+                                        <!-- Actions -->
+                                        <div class="flex-row gap-sm margin-top-md justify-end border-top pt-md">
+                                            <button class="btn-danger btn-sm margin-right-auto" onclick="deleteActiveMatch()">
+                                                <i class="fa-solid fa-trash-can"></i> Hapus Pertandingan
+                                            </button>
+                                            <button class="btn-primary" onclick="updateMatchManual()">
+                                                <i class="fa-solid fa-circle-check"></i> Simpan Perubahan Skor & Status
+                                            </button>
+                                        </div>
+
+                                    </div>
+                                    
+                                    <div id="admin-match-manager-empty" class="text-center text-muted py-5">
+                                        <i class="fa-solid fa-gamepad text-lg margin-bottom-sm"></i>
+                                        <p>Pilih salah satu pertandingan dari dropdown di atas untuk mulai mengelola.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Predictions Moderator Panel -->
+                            <div class="card-glow-wrapper">
+                                <div class="glass-card">
+                                    <div class="card-header border-bottom">
+                                        <h3 class="card-title text-gold"><i class="fa-solid fa-shield-halved"></i> Moderasi Tebakan Peserta</h3>
+                                        <span class="badge" id="adm-predictions-count">0 Tebakan</span>
+                                    </div>
+                                    
+                                    <div class="admin-table-container">
+                                        <table class="admin-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Nama Peserta</th>
+                                                    <th>Tebakan</th>
+                                                    <th>Device ID</th>
+                                                    <th>Waktu Submit</th>
+                                                    <th>Aksi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="adm-predictions-list">
+                                                <tr>
+                                                    <td colspan="5" class="text-center py-4 text-muted">Belum ada tebakan yang masuk.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="app-footer">
+        <p>&copy; 2026 Tebak Skor v2 - Watch Party Companion. Powered by Supabase & API-Sports.</p>
+    </footer>
+
+    <!-- Javascript Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
