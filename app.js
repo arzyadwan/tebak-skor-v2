@@ -943,6 +943,25 @@ async function deleteActiveMatch() {
     }
 }
 
+// RESET ALL PREDICTIONS
+async function resetAllPredictions() {
+    if (!adminPin || !selectedMatchId) return;
+    if (!confirm("Apakah Anda yakin ingin menghapus SEMUA data tebakan peserta untuk pertandingan ini? Tindakan ini tidak bisa dibatalkan!")) return;
+
+    try {
+        const { error } = await supabaseClient.rpc("admin_reset_predictions", {
+            match_id: selectedMatchId,
+            admin_pin: adminPin
+        });
+
+        if (error) throw error;
+        alert("Semua tebakan berhasil dihapus bersih!");
+        await refreshActivePageData();
+    } catch (err) {
+        alert("Gagal mereset tebakan: " + err.message);
+    }
+}
+
 // MODERATION TABLE LIST
 function renderAdminPredictions() {
     const container = document.getElementById("adm-predictions-list");
