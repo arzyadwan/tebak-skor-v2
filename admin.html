@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Host Admin Dashboard - Tebak Skor Bola</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body id="page-admin" class="dark">
+    <!-- Premium background elements -->
+    <div class="neon-grid"></div>
+    <div class="radial-glow"></div>
+
+    <main class="app-main">
+        <div class="view-container wide-layout">
+            
+            <!-- Admin Login Card (PIN Overlay) -->
+            <div id="admin-login-card" class="card-glow-wrapper max-w-400 mx-auto py-5">
+                <div class="glass-card text-center">
+                    <div class="admin-icon-wrapper">
+                        <i class="fa-solid fa-user-lock text-neon"></i>
+                    </div>
+                    <h2 class="card-title justify-center font-bold text-lg">Otentikasi Host Admin</h2>
+                    <p class="card-subtitle text-muted">Masukkan PIN Admin Anda untuk membuka dashboard.</p>
+                    
+                    <form id="form-admin-login" onsubmit="loginAdmin(event)">
+                        <div class="input-group">
+                            <label for="input-admin-pin" class="sr-only">PIN Admin</label>
+                            <input type="password" id="input-admin-pin" placeholder="PIN Admin (Default: 1234)" required class="text-center font-digital tracking-widest text-lg" autocomplete="current-password">
+                        </div>
+                        <div id="admin-login-error" class="text-danger text-sm margin-bottom-sm bold" style="display: none;"><i class="fa-solid fa-circle-exclamation"></i> PIN Admin Salah!</div>
+                        <button type="submit" class="btn-primary btn-glow w-full">
+                            <i class="fa-solid fa-unlock-keyhole"></i> Buka Dashboard
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Admin Dashboard Content (Initially Hidden) -->
+            <div id="admin-dashboard" style="display: none;">
+                
+                <!-- Admin Header Bar -->
+                <div class="admin-top-bar glass-card margin-bottom-md">
+                    <div class="admin-title-area">
+                        <h2 class="card-title text-gold"><i class="fa-solid fa-screwdriver-wrench"></i> Admin Dashboard v2</h2>
+                        <p class="text-xs text-muted">Kelola pertandingan nobar, aktifkan sinkronisasi otomatis, moderasi peserta.</p>
+                    </div>
+                    <div class="admin-action-area">
+                        <button class="btn-danger btn-sm" onclick="logoutAdmin()">
+                            <i class="fa-solid fa-right-from-bracket"></i> Keluar Dashboard
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grid Layout: Controls, Configurations & Lists -->
+                <div class="dashboard-grid">
+                    
+                    <!-- Left Column: Settings and Creation -->
+                    <div class="flex-column gap-md">
+                        
+                        <!-- API Config Panel -->
+                        <div class="card-glow-wrapper">
+                            <div class="glass-card">
+                                <h3 class="card-title text-gold"><i class="fa-solid fa-key"></i> Konfigurasi API-Sports</h3>
+                                <p class="card-subtitle text-xs text-muted">API key disimpan lokal di browser admin untuk keamanan.</p>
+                                
+                                <div class="input-group">
+                                    <label for="input-api-key">API Key API-Football (V3)</label>
+                                    <input type="password" id="input-api-key" placeholder="Masukkan 32 Karakter API Key..." autocomplete="off">
+                                </div>
+                                
+                                <div class="flex-row gap-sm justify-between">
+                                    <button class="btn-secondary w-full" onclick="testApiKey()">
+                                        <i class="fa-solid fa-circle-nodes"></i> Tes Koneksi
+                                    </button>
+                                    <button class="btn-primary w-full" onclick="saveApiKey()">
+                                        <i class="fa-solid fa-floppy-disk"></i> Simpan Key
+                                    </button>
+                                </div>
+                                <div id="api-status-msg" class="margin-top-sm bold text-sm text-center"></div>
+                            </div>
+                        </div>
+
+                        <!-- Create Match Panel -->
+                        <div class="card-glow-wrapper">
+                            <div class="glass-card">
+                                <h3 class="card-title text-gold"><i class="fa-solid fa-circle-plus"></i> Tambah Pertandingan</h3>
+                                
+                                <form id="form-create-match" onsubmit="createMatch(event)">
+                                    <div class="form-row">
+                                        <div class="input-group">
+                                            <label for="input-match-teama">Tim A (Home)</label>
+                                            <input type="text" id="input-match-teama" placeholder="Nama Tim..." required>
+                                        </div>
+                                        <div class="input-group">
+                                            <label for="input-match-logoa">Logo Tim A (URL)</label>
+                                            <input type="text" id="input-match-logoa" placeholder="URL Logo..." required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="input-group">
+                                            <label for="input-match-teamb">Tim B (Away)</label>
+                                            <input type="text" id="input-match-teamb" placeholder="Nama Tim..." required>
+                                        </div>
+                                        <div class="input-group">
+                                            <label for="input-match-logob">Logo Tim B (URL)</label>
+                                            <input type="text" id="input-match-logob" placeholder="URL Logo..." required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="input-group">
+                                        <label for="input-match-kickoff">Waktu Kick-off (Batas Kirim)</label>
+                                        <input type="datetime-local" id="input-match-kickoff" required>
+                                    </div>
+
+                                    <div class="input-group">
+                                        <label for="input-match-api-id">API-Sports Fixture ID (Opsional)</label>
+                                        <input type="number" id="input-match-api-id" placeholder="Contoh: 1586077">
+                                        <p class="input-helper">Menghubungkan otomatis dengan API live score.</p>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn-primary w-full">
+                                        <i class="fa-solid fa-plus"></i> Buat Pertandingan
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Right Column (Span 2): Live Score Modifier & Predictions moderation -->
+                    <div class="flex-column gap-md grid-span-2">
+                        
+                        <!-- Live score modifiers -->
+                        <div class="card-glow-wrapper">
+                            <div class="glass-card">
+                                <h3 class="card-title text-gold"><i class="fa-solid fa-gamepad"></i> Pengendali Skor & Menit</h3>
+                                
+                                <div class="selector-wrapper margin-bottom-sm">
+                                    <label for="match-select-admin" class="sr-only">Pilih Pertandingan Kelola</label>
+                                    <select id="match-select-admin" class="custom-select" onchange="onMatchChangedAdmin()">
+                                        <option value="">Pilih pertandingan...</option>
+                                    </select>
+                                </div>
+                                
+                                <div id="admin-match-manager-panel" style="display: none;">
+                                    <div class="admin-score-editor">
+                                        <div class="admin-score-team home">
+                                            <img id="adm-team-a-logo" src="" alt="Home Logo" class="team-logo-img mini" onerror="this.src='https://placehold.co/32x32/10141e/ffffff?text=H'">
+                                            <h4 id="adm-team-a-name" class="name">Home</h4>
+                                            <div class="score-modifier">
+                                                <button class="btn-step" onclick="adjustAdminScore('adm-score-a', -1)"><i class="fa-solid fa-minus"></i></button>
+                                                <input type="number" id="adm-score-a" value="0" min="0">
+                                                <button class="btn-step" onclick="adjustAdminScore('adm-score-a', 1)"><i class="fa-solid fa-plus"></i></button>
+                                            </div>
+                                        </div>
+
+                                        <div class="score-colon font-digital">:</div>
+
+                                        <div class="admin-score-team away">
+                                            <img id="adm-team-b-logo" src="" alt="Away Logo" class="team-logo-img mini" onerror="this.src='https://placehold.co/32x32/10141e/ffffff?text=A'">
+                                            <h4 id="adm-team-b-name" class="name">Away</h4>
+                                            <div class="score-modifier">
+                                                <button class="btn-step" onclick="adjustAdminScore('adm-score-b', -1)"><i class="fa-solid fa-minus"></i></button>
+                                                <input type="number" id="adm-score-b" value="0" min="0">
+                                                <button class="btn-step" onclick="adjustAdminScore('adm-score-b', 1)"><i class="fa-solid fa-plus"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="admin-controls-grid">
+                                        <div class="input-group">
+                                            <label for="adm-match-status">Status Pertandingan</label>
+                                            <select id="adm-match-status" class="custom-select" onchange="onAdminStatusChanged()">
+                                                <option value="PENDING">PENDING (Tebakan Terbuka)</option>
+                                                <option value="LIVE">LIVE (Tebakan Terkunci)</option>
+                                                <option value="FINISHED">FINISHED (Tebakan Selesai)</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="input-group">
+                                            <label for="adm-match-elapsed">Menit Berjalan</label>
+                                            <input type="number" id="adm-match-elapsed" value="0" min="0" max="150">
+                                        </div>
+                                    </div>
+
+                                    <!-- API-Sports Sync Container -->
+                                    <div class="api-sync-panel border-top margin-top-md" id="adm-api-sync-container" style="display: none;">
+                                        <h4 class="section-title text-sm"><i class="fa-solid fa-rotate text-neon"></i> Sinkronisasi API-Sports (Fixture: <span id="adm-fixture-id-val">-</span>)</h4>
+                                        
+                                        <div class="flex-row justify-between align-center margin-bottom-sm">
+                                            <div class="checkbox-wrapper">
+                                                <input type="checkbox" id="check-auto-sync" onchange="toggleAutoSync(this)">
+                                                <label for="check-auto-sync">Aktifkan Auto-Sync (60 detik)</label>
+                                            </div>
+                                            <span class="text-xs text-muted" id="last-sync-time">Belum disinkron</span>
+                                        </div>
+                                        
+                                        <button class="btn-secondary w-full" id="btn-sync-now" onclick="syncScoreFromApiNow()">
+                                            <i class="fa-solid fa-cloud-arrow-down"></i> Tarik Skor Aktual Sekarang
+                                        </button>
+                                    </div>
+
+                                    <div class="flex-row gap-sm margin-top-md justify-end border-top pt-md">
+                                        <button class="btn-danger btn-sm margin-right-auto" onclick="deleteActiveMatch()">
+                                            <i class="fa-solid fa-trash-can"></i> Hapus Match
+                                        </button>
+                                        <button class="btn-primary" onclick="updateMatchManual()">
+                                            <i class="fa-solid fa-circle-check"></i> Simpan Perubahan
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div id="admin-match-manager-empty" class="text-center text-muted py-5">
+                                    <i class="fa-solid fa-gamepad text-lg margin-bottom-sm"></i>
+                                    <p>Pilih salah satu pertandingan dari dropdown di atas untuk mengelola.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Moderation table -->
+                        <div class="card-glow-wrapper">
+                            <div class="glass-card">
+                                <div class="card-header border-bottom">
+                                    <h3 class="card-title text-gold"><i class="fa-solid fa-shield-halved"></i> Moderasi Tebakan Masuk</h3>
+                                    <span class="badge" id="adm-predictions-count">0 Tebakan</span>
+                                </div>
+                                
+                                <div class="admin-table-container">
+                                    <table class="admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Nama Peserta</th>
+                                                <th>Tebakan</th>
+                                                <th>Device ID</th>
+                                                <th>Waktu Kirim</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="adm-predictions-list">
+                                            <tr>
+                                                <td colspan="5" class="text-center py-4 text-muted">Belum ada tebakan terdaftar.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="app-footer text-center">
+        <p>&copy; 2026 Tebak Skor v2 - Watch Party Companion. Powered by Supabase & API-Sports.</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

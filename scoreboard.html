@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Papan Skor Layar Nobar - Tebak Skor Bola</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js & Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body id="page-scoreboard" class="dark">
+    <!-- Premium background elements -->
+    <div class="neon-grid"></div>
+    <div class="radial-glow"></div>
+
+    <main class="app-main wide-layout">
+        <div class="view-container wide-layout">
+            
+            <!-- Header Screen Control -->
+            <div class="screen-controls-header flex-row justify-between align-center">
+                <div class="brand-logo small">
+                    <i class="fa-solid fa-trophy text-gold"></i>
+                    <span class="brand-text">TEBAK<span class="text-neon">SKOR</span> <span class="text-muted text-xs font-normal">Layar Nobar</span></span>
+                </div>
+                <div class="selector-wrapper flex-row align-center">
+                    <label for="match-select-public" class="text-gold bold margin-right-sm text-sm"><i class="fa-solid fa-tv"></i> Pertandingan:</label>
+                    <select id="match-select-public" class="custom-select max-w-300" onchange="onMatchChangedPublic()">
+                        <option value="">Memuat pertandingan...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Jumbo Live Scoreboard -->
+            <div class="card-glow-wrapper margin-top-sm">
+                <div class="glass-card jumbo-score-card">
+                    <div class="jumbo-header">
+                        <span id="screen-league-name" class="league-title">⚽ WORLD CUP MATCH CENTER</span>
+                        <div class="jumbo-status-badge PENDING" id="screen-status-badge">
+                            <span class="status-dot"></span> <span id="screen-match-status">PENDING</span>
+                        </div>
+                    </div>
+                    
+                    <div class="jumbo-body">
+                        <div class="jumbo-team home">
+                            <img id="screen-home-logo" src="" alt="Logo Home Team" class="team-logo-img">
+                            <h2 id="screen-home-name">TIM A</h2>
+                        </div>
+                        
+                        <div class="jumbo-score-display">
+                            <div class="jumbo-score-digital font-digital" id="screen-score-home">0</div>
+                            <div class="jumbo-score-divider font-digital">:</div>
+                            <div class="jumbo-score-digital font-digital" id="screen-score-away">0</div>
+                        </div>
+                        
+                        <div class="jumbo-team away">
+                            <img id="screen-away-logo" src="" alt="Logo Away Team" class="team-logo-img">
+                            <h2 id="screen-away-name">TIM B</h2>
+                        </div>
+                    </div>
+                    
+                    <div class="jumbo-footer">
+                        <div class="jumbo-time" id="screen-time-container" style="display: none;">
+                            Menit: <span id="screen-elapsed-time" class="text-neon-green font-digital">0'</span>
+                        </div>
+                        <div class="jumbo-time" id="screen-countdown-container">
+                            Mulai Dalam: <span id="screen-kickoff-countdown" class="text-neon-gold">00:00:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid Layout: Leaderboard & Charts -->
+            <div class="dashboard-grid">
+                
+                <!-- Leaderboard (Zinc Style Table) -->
+                <div class="card-glow-wrapper grid-span-2">
+                    <div class="glass-card h-full">
+                        <div class="card-header border-bottom">
+                            <h3 class="card-title text-gold"><i class="fa-solid fa-ranking-star"></i> Papan Peringkat (Leaderboard)</h3>
+                            <span class="badge badge-neon-green" id="screen-total-predictions">0 Tebakan</span>
+                        </div>
+                        
+                        <div class="leaderboard-table-container">
+                            <table class="leaderboard-table">
+                                <thead>
+                                    <tr>
+                                        <th>Peringkat</th>
+                                        <th>Peserta</th>
+                                        <th>Tebakan</th>
+                                        <th>Jarak Gol</th>
+                                        <th>Waktu Kirim</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leaderboard-list">
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">Belum ada tebakan terdaftar.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prediction Charts & Statistics -->
+                <div class="card-glow-wrapper">
+                    <div class="glass-card h-full">
+                        <div class="card-header border-bottom">
+                            <h3 class="card-title"><i class="fa-solid fa-chart-pie"></i> Analisis Hasil Tebakan</h3>
+                        </div>
+                        <div class="stats-panel-content">
+                            <div class="chart-container">
+                                <canvas id="outcome-chart"></canvas>
+                            </div>
+                            
+                            <div class="stats-cards-wrapper">
+                                <div class="mini-stat-card">
+                                    <span class="stat-lbl">Home Win</span>
+                                    <strong id="stat-home-pct" class="stat-val text-neon-green">0%</strong>
+                                </div>
+                                <div class="mini-stat-card">
+                                    <span class="stat-lbl">Seri (Draw)</span>
+                                    <strong id="stat-draw-pct" class="stat-val text-muted">0%</strong>
+                                </div>
+                                <div class="mini-stat-card">
+                                    <span class="stat-lbl">Away Win</span>
+                                    <strong id="stat-away-pct" class="stat-val text-orange">0%</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Ticker Activity Feed at the bottom -->
+            <div class="ticker-wrapper card-glow-wrapper margin-top-md">
+                <div class="glass-card ticker-card">
+                    <div class="ticker-label"><i class="fa-solid fa-bolt text-neon"></i> Live Feed:</div>
+                    <div class="ticker-track" id="ticker-track">
+                        <div class="ticker-item">Memuat aktivitas tebakan...</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="app-footer text-center">
+        <p>&copy; 2026 Tebak Skor v2 - Watch Party Companion. Powered by Supabase & API-Sports.</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 // ==========================================================================
-// TEBAK SKOR V2 - APPLICATION JAVASCRIPT
+// TEBAK SKOR V2 - LOGIKA MULTI-PAGE TERINTEGRASI
 // ==========================================================================
 
 // 1. SUPABASE CONFIGURATION
@@ -10,7 +10,7 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // STATE VARIABLES
 let deviceId = "";
-let currentView = "participant";
+let pageId = ""; // 'page-participant', 'page-scoreboard', 'page-admin'
 let activeMatches = [];
 let selectedMatchId = null;
 let currentMatchData = null;
@@ -20,27 +20,29 @@ let outcomeChartInstance = null;
 let autoSyncTimer = null;
 let countdownTimer = null;
 
-// INIT APPLICATION
+// INIT APPLICATION FOR SPECIFIC PAGE
 document.addEventListener("DOMContentLoaded", () => {
     initDeviceId();
-    loadSavedAdminSession();
+    pageId = document.body.id;
     
-    // Initial data fetch
+    // Load config sessions if admin
+    if (pageId === 'page-admin') {
+        loadSavedAdminSession();
+    }
+
+    // Initial fetch matches, then initialize page modules
     fetchMatches().then(() => {
-        // Render initial view
-        switchView('participant');
+        initPageModule();
     });
 
-    // Auto-refresh loop for participant/public displays (every 5 seconds)
+    // Auto-refresh loop (every 5 seconds)
     setInterval(() => {
-        if (currentView === 'participant' || currentView === 'public') {
-            refreshActiveViewData();
-        }
+        refreshActivePageData();
     }, 5000);
 });
 
 // ==========================================================================
-// DEVICE ID & TAB NAVIGATION
+// INITIALIZATION & ROUTING BY BODY ID
 // ==========================================================================
 function initDeviceId() {
     deviceId = localStorage.getItem("tebak_skor_v2_device_id");
@@ -50,31 +52,14 @@ function initDeviceId() {
     }
 }
 
-function switchView(viewName) {
-    currentView = viewName;
-    
-    // Update Navigation Tabs UI
-    document.querySelectorAll(".nav-tab").forEach(tab => {
-        tab.classList.remove("active");
-    });
-    const activeTabBtn = document.getElementById(`btn-tab-${viewName}`);
-    if (activeTabBtn) activeTabBtn.classList.add("active");
-
-    // Hide all views, display the selected one
-    document.querySelectorAll(".app-view").forEach(view => {
-        view.classList.remove("active");
-    });
-    const targetView = document.getElementById(`view-${viewName}`);
-    if (targetView) targetView.classList.add("active");
-
-    // Trigger page-specific loads
-    if (viewName === 'participant') {
+function initPageModule() {
+    if (pageId === 'page-participant') {
         syncDropdown('match-select-participant');
         onMatchChangedParticipant();
-    } else if (viewName === 'public') {
+    } else if (pageId === 'page-scoreboard') {
         syncDropdown('match-select-public');
         onMatchChangedPublic();
-    } else if (viewName === 'admin') {
+    } else if (pageId === 'page-admin') {
         checkAdminAccess();
     }
 }
@@ -107,7 +92,7 @@ function syncDropdown(dropdownId) {
 }
 
 // ==========================================================================
-// SUPABASE DATA FETCHERS
+// DATABASE FETCHERS
 // ==========================================================================
 async function fetchMatches() {
     try {
@@ -144,7 +129,7 @@ async function fetchMatchPredictions(matchId) {
     }
 }
 
-async function refreshActiveViewData() {
+async function refreshActivePageData() {
     await fetchMatches();
     if (!selectedMatchId && activeMatches.length > 0) {
         selectedMatchId = activeMatches[0].id;
@@ -154,41 +139,42 @@ async function refreshActiveViewData() {
         currentMatchData = activeMatches.find(m => m.id == selectedMatchId);
         predictionsList = await fetchMatchPredictions(selectedMatchId);
         
-        if (currentView === 'participant') {
+        if (pageId === 'page-participant') {
             renderParticipantView();
-        } else if (currentView === 'public') {
+        } else if (pageId === 'page-scoreboard') {
             renderPublicView();
-        } else if (currentView === 'admin' && adminPin) {
+        } else if (pageId === 'page-admin' && adminPin) {
             renderAdminDashboard();
         }
     }
 }
 
 // ==========================================================================
-// VIEW 1: PARTICIPANT LOGIC
+// PAGE 1: PARTICIPANT LOGIC (index.html)
 // ==========================================================================
 async function onMatchChangedParticipant() {
     const dropdown = document.getElementById("match-select-participant");
     if (dropdown && dropdown.value) {
         selectedMatchId = parseInt(dropdown.value);
     }
-    await refreshActiveViewData();
+    await refreshActivePageData();
 }
 
 function renderParticipantView() {
     if (!currentMatchData) return;
 
-    // 1. Render Team Names & Logos
+    // 1. Render Team Names & API Logos
     document.getElementById("p-home-name").textContent = currentMatchData.team_a_name;
     document.getElementById("p-away-name").textContent = currentMatchData.team_b_name;
     
     document.getElementById("guess-label-home").textContent = currentMatchData.team_a_name;
     document.getElementById("guess-label-away").textContent = currentMatchData.team_b_name;
 
-    renderLogo("p-home-logo", currentMatchData.team_a_logo, currentMatchData.team_a_name);
-    renderLogo("p-away-logo", currentMatchData.team_b_logo, currentMatchData.team_b_name);
+    // Render image logos from API directly
+    document.getElementById("p-home-logo").src = currentMatchData.team_a_logo || "https://placehold.co/100x100?text=Home";
+    document.getElementById("p-away-logo").src = currentMatchData.team_b_logo || "https://placehold.co/100x100?text=Away";
 
-    // 2. Render Match Status Badges
+    // 2. Match Status Badges
     const status = currentMatchData.status;
     const statusBadge = document.getElementById("p-match-status-badge");
     const statusText = document.getElementById("p-match-status");
@@ -230,11 +216,9 @@ function renderParticipantView() {
     const successCard = document.getElementById("container-prediction-success");
     const lockedCard = document.getElementById("container-match-locked");
 
-    // Check if match registration is closed
     const isKickoffPassed = new Date() >= new Date(currentMatchData.kickoff_time);
     const isLocked = status !== 'PENDING' || isKickoffPassed;
 
-    // Check if device already voted for this match in local storage
     const votedData = getVotedPrediction(selectedMatchId);
 
     if (votedData) {
@@ -255,21 +239,6 @@ function renderParticipantView() {
         lockedCard.style.display = "none";
         successCard.style.display = "none";
         formCard.style.display = "block";
-    }
-}
-
-function renderLogo(elId, logoData, fallbackText) {
-    const el = document.getElementById(elId);
-    if (!el) return;
-
-    if (!logoData) {
-        el.textContent = "⚽";
-    } else if (logoData.length <= 4) {
-        // It's likely an emoji flag
-        el.textContent = logoData;
-    } else {
-        // It's a URL
-        el.innerHTML = `<img src="${logoData}" alt="${fallbackText} Logo" onerror="this.outerHTML='⚽'">`;
     }
 }
 
@@ -298,7 +267,7 @@ function startKickoffCountdown(kickoffTime, elementId) {
         if (distance < 0) {
             el.textContent = "PERTANDINGAN DIMULAI";
             clearInterval(countdownTimer);
-            refreshActiveViewData();
+            refreshActivePageData();
             return;
         }
 
@@ -314,7 +283,7 @@ function startKickoffCountdown(kickoffTime, elementId) {
     countdownTimer = setInterval(updateTimer, 1000);
 }
 
-// Prediction Submission Handler
+// Submit Prediction
 async function submitPrediction(e) {
     e.preventDefault();
     if (!currentMatchData || !selectedMatchId) return;
@@ -328,7 +297,6 @@ async function submitPrediction(e) {
         return;
     }
 
-    // Safety checks
     if (currentMatchData.status !== 'PENDING' || new Date() >= new Date(currentMatchData.kickoff_time)) {
         alert("Pendaftaran tebakan sudah ditutup untuk pertandingan ini!");
         return;
@@ -339,7 +307,6 @@ async function submitPrediction(e) {
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...`;
 
     try {
-        // Submit to database
         const { data, error } = await supabaseClient
             .from("tebak_skor_v2_predictions")
             .insert([{
@@ -353,22 +320,21 @@ async function submitPrediction(e) {
 
         if (error) {
             if (error.code === '23505') {
-                throw new Error("Nama panggilan ini sudah digunakan untuk tebakan di pertandingan ini. Harap gunakan nama lain!");
+                throw new Error("Nama panggilan ini sudah digunakan. Harap gunakan nama lain!");
             }
             throw error;
         }
 
         if (data && data.length > 0) {
-            // Save success status in local storage
             saveVotedPrediction(selectedMatchId, data[0]);
             alert("Tebakan Anda berhasil dikirim!");
-            refreshActiveViewData();
+            refreshActivePageData();
         }
     } catch (err) {
         alert("Gagal mengirim tebakan: " + err.message);
     } finally {
         btn.disabled = false;
-        btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Kirim Tebakan`;
+        btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Kirim Prediksi Skor`;
     }
 }
 
@@ -387,24 +353,24 @@ function sharePrediction() {
     const votedData = getVotedPrediction(selectedMatchId);
     if (!votedData || !currentMatchData) return;
 
-    const text = `Saya sudah menebak skor pertandingan ${currentMatchData.team_a_name} vs ${currentMatchData.team_b_name} di Event Nobar! ⚽🏆\nTebakan Saya: ${currentMatchData.team_a_logo} ${votedData.guess_a} - ${votedData.guess_b} ${currentMatchData.team_b_logo}\nIkutan tebak skor sekarang!`;
+    const text = `Saya sudah menebak skor pertandingan ${currentMatchData.team_a_name} vs ${currentMatchData.team_b_name} di Event Nobar! ⚽🏆\nTebakan Saya: ${votedData.guess_a} - ${votedData.guess_b}\nIkutan tebak skor sekarang!`;
     
     navigator.clipboard.writeText(text).then(() => {
-        alert("Salinan teks tebakan berhasil disalin ke clipboard! Siap dibagikan.");
+        alert("Salinan resi berhasil disalin ke clipboard! Siap dibagikan.");
     }).catch(err => {
-        console.error("Gagal menyalin teks:", err);
+        console.error("Gagal menyalin resi:", err);
     });
 }
 
 // ==========================================================================
-// VIEW 2: PUBLIC DISPLAY / NOBAR LAYAR LEBAR LOGIKA
+// PAGE 2: PUBLIC SCREEN LOGIC (scoreboard.html)
 // ==========================================================================
 async function onMatchChangedPublic() {
     const dropdown = document.getElementById("match-select-public");
     if (dropdown && dropdown.value) {
         selectedMatchId = parseInt(dropdown.value);
     }
-    await refreshActiveViewData();
+    await refreshActivePageData();
 }
 
 function renderPublicView() {
@@ -417,20 +383,9 @@ function renderPublicView() {
     document.getElementById("screen-score-home").textContent = currentMatchData.score_a;
     document.getElementById("screen-score-away").textContent = currentMatchData.score_b;
 
-    const homeLogoImg = document.getElementById("screen-home-logo");
-    const awayLogoImg = document.getElementById("screen-away-logo");
-    
-    if (currentMatchData.team_a_logo && currentMatchData.team_a_logo.length > 4) {
-        homeLogoImg.src = currentMatchData.team_a_logo;
-    } else {
-        homeLogoImg.src = `https://placehold.co/100x100/10141e/ffffff?text=${currentMatchData.team_a_name.substring(0, 3)}`;
-    }
-    
-    if (currentMatchData.team_b_logo && currentMatchData.team_b_logo.length > 4) {
-        awayLogoImg.src = currentMatchData.team_b_logo;
-    } else {
-        awayLogoImg.src = `https://placehold.co/100x100/10141e/ffffff?text=${currentMatchData.team_b_name.substring(0, 3)}`;
-    }
+    // Render image logos from API directly
+    document.getElementById("screen-home-logo").src = currentMatchData.team_a_logo || "https://placehold.co/100x100?text=Home";
+    document.getElementById("screen-away-logo").src = currentMatchData.team_b_logo || "https://placehold.co/100x100?text=Away";
 
     const status = currentMatchData.status;
     document.getElementById("screen-match-status").textContent = status;
@@ -459,12 +414,10 @@ function renderPublicView() {
     const scoredPredictions = predictionsList.map(pred => {
         const error = Math.abs(pred.guess_a - scoreA) + Math.abs(pred.guess_b - scoreB);
         
-        // Define matches types for visual highlight
         let matchType = ""; // "exact", "outcome", or ""
         if (error === 0) {
             matchType = "exact";
         } else {
-            // Check if outcome (win/loss/draw) matches
             const actualOutcome = Math.sign(scoreA - scoreB);
             const guessOutcome = Math.sign(pred.guess_a - pred.guess_b);
             if (actualOutcome === guessOutcome) {
@@ -490,7 +443,7 @@ function renderPublicView() {
     listBody.innerHTML = "";
 
     if (scoredPredictions.length === 0) {
-        listBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">Belum ada tebakan dikirim.</td></tr>`;
+        listBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">Belum ada data tebakan.</td></tr>`;
     } else {
         scoredPredictions.forEach((pred, index) => {
             const rank = index + 1;
@@ -500,7 +453,6 @@ function renderPublicView() {
             else if (rank === 2) { rankClass = "rank-2"; }
             else if (rank === 3) { rankClass = "rank-3"; }
 
-            // Highlight class for correct predictions if match is LIVE/FINISHED
             let highlightClass = "";
             if (status !== 'PENDING') {
                 if (pred.matchType === 'exact') highlightClass = "match-exact";
@@ -572,8 +524,8 @@ function renderCharts(scoredPreds) {
                 labels: [`${currentMatchData.team_a_name}`, 'Seri (Draw)', `${currentMatchData.team_b_name}`],
                 datasets: [{
                     data: [homeWins, draws, awayWins],
-                    backgroundColor: ['#39ff14', '#62728d', '#ff9100'],
-                    borderColor: '#050811',
+                    backgroundColor: ['#10b981', '#27272a', '#f59e0b'],
+                    borderColor: '#18181b',
                     borderWidth: 2,
                     hoverOffset: 4
                 }]
@@ -585,7 +537,7 @@ function renderCharts(scoredPreds) {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            color: '#a3b3cc',
+                            color: '#a1a1aa',
                             font: { family: 'Outfit', size: 11 }
                         }
                     }
@@ -602,11 +554,10 @@ function renderActivityTicker(preds) {
     if (!track) return;
 
     if (preds.length === 0) {
-        track.innerHTML = `<div class="ticker-item">Menunggu tebakan pertama masuk...</div>`;
+        track.innerHTML = `<div class="ticker-item">Menunggu tebakan masuk...</div>`;
         return;
     }
 
-    // Sort by recent first
     const sortedRecent = [...preds].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     const recent = sortedRecent[tickerIndex % sortedRecent.length];
     tickerIndex++;
@@ -622,7 +573,7 @@ function renderActivityTicker(preds) {
 }
 
 // ==========================================================================
-// VIEW 3: ADMIN LOGIC
+// PAGE 3: ADMIN LOGIC (admin.html)
 // ==========================================================================
 function loadSavedAdminSession() {
     const savedPin = sessionStorage.getItem("tebak_skor_v2_admin_pin");
@@ -679,7 +630,7 @@ async function onMatchChangedAdmin() {
     if (dropdown && dropdown.value) {
         selectedMatchId = parseInt(dropdown.value);
     }
-    await refreshActiveViewData();
+    await refreshActivePageData();
 }
 
 function renderAdminDashboard() {
@@ -695,11 +646,13 @@ function renderAdminDashboard() {
     emptyPanel.style.display = "none";
     controlPanel.style.display = "block";
 
-    // Populate Match Score Modifier Info
+    // Populate Modifiers Info
     document.getElementById("adm-team-a-name").textContent = currentMatchData.team_a_name;
     document.getElementById("adm-team-b-name").textContent = currentMatchData.team_b_name;
-    document.getElementById("adm-team-a-logo").textContent = currentMatchData.team_a_logo || "⚽";
-    document.getElementById("adm-team-b-logo").textContent = currentMatchData.team_b_logo || "⚽";
+    
+    // Render team logo images from API directly
+    document.getElementById("adm-team-a-logo").src = currentMatchData.team_a_logo || "https://placehold.co/100x100?text=Home";
+    document.getElementById("adm-team-b-logo").src = currentMatchData.team_b_logo || "https://placehold.co/100x100?text=Away";
 
     document.getElementById("adm-score-a").value = currentMatchData.score_a;
     document.getElementById("adm-score-b").value = currentMatchData.score_b;
@@ -713,14 +666,13 @@ function renderAdminDashboard() {
         document.getElementById("adm-fixture-id-val").textContent = currentMatchData.api_fixture_id;
     } else {
         apiSyncContainer.style.display = "none";
-        // Stop timer if match doesn't support api sync
         if (autoSyncTimer) {
             clearInterval(autoSyncTimer);
             document.getElementById("check-auto-sync").checked = false;
         }
     }
 
-    // Render Admin moderation list of predictions
+    // Render moderations
     renderAdminPredictions();
 }
 
@@ -733,7 +685,7 @@ function adjustAdminScore(inputId, delta) {
     input.value = val;
 }
 
-// CRUD MATCH OPERATION
+// CREATE MATCH (via secure RPC)
 async function createMatch(e) {
     e.preventDefault();
     if (!adminPin) return;
@@ -754,7 +706,6 @@ async function createMatch(e) {
     try {
         const isoKickoff = new Date(kickoff).toISOString();
         
-        // Execute insert match via secure RPC
         const { data, error } = await supabaseClient.rpc("admin_create_match", {
             team_a: teamA,
             team_b: teamB,
@@ -770,10 +721,6 @@ async function createMatch(e) {
         alert("Pertandingan baru berhasil ditambahkan!");
         document.getElementById("form-create-match").reset();
         
-        // Default flags set back
-        document.getElementById("input-match-logoa").value = "🏴󠁧󠁢󠁥󠁮󠁧󠁿";
-        document.getElementById("input-match-logob").value = "🇦🇷";
-        
         await fetchMatches();
         if (data) selectedMatchId = parseInt(data);
         syncDropdown('match-select-admin');
@@ -783,7 +730,7 @@ async function createMatch(e) {
     }
 }
 
-// UPDATE MATCH (MANUAL SCORES UPDATE)
+// UPDATE MATCH MANUAL
 async function updateMatchManual() {
     if (!adminPin || !selectedMatchId) return;
 
@@ -804,7 +751,7 @@ async function updateMatchManual() {
 
         if (error) throw error;
         alert("Skor & Status pertandingan berhasil diperbarui!");
-        await refreshActiveViewData();
+        await refreshActivePageData();
     } catch (err) {
         alert("Gagal memperbarui pertandingan: " + err.message);
     }
@@ -813,7 +760,7 @@ async function updateMatchManual() {
 // DELETE MATCH
 async function deleteActiveMatch() {
     if (!adminPin || !selectedMatchId) return;
-    if (!confirm("Apakah Anda yakin ingin menghapus pertandingan ini beserta semua tebakan peserta di dalamnya? Tindakan ini tidak bisa dibatalkan!")) return;
+    if (!confirm("Hapus pertandingan beserta seluruh tebakan di dalamnya?")) return;
 
     try {
         const { error } = await supabaseClient.rpc("admin_delete_match", {
@@ -832,7 +779,7 @@ async function deleteActiveMatch() {
     }
 }
 
-// PREDICTIONS MODERATOR LIST
+// MODERATION TABLE LIST
 function renderAdminPredictions() {
     const container = document.getElementById("adm-predictions-list");
     document.getElementById("adm-predictions-count").textContent = `${predictionsList.length} Tebakan`;
@@ -874,24 +821,22 @@ async function deletePrediction(predId) {
         });
 
         if (error) throw error;
-        alert("Tebakan peserta berhasil dihapus!");
-        await refreshActiveViewData();
+        alert("Tebakan berhasil dihapus!");
+        await refreshActivePageData();
     } catch (err) {
         alert("Gagal menghapus tebakan: " + err.message);
     }
 }
 
-// ==========================================================================
-// API-SPORTS (LIVE SCORES SINKRONISASI)
-// ==========================================================================
+// API CONFIGS
 function saveApiKey() {
     const key = document.getElementById("input-api-key").value.trim();
     if (key.length !== 32) {
-        alert("Harap masukkan API Key 32 karakter yang valid!");
+        alert("Harap masukkan API Key 32 karakter!");
         return;
     }
     localStorage.setItem("tebak_skor_v2_api_key", key);
-    alert("API Key disimpan secara lokal!");
+    alert("API Key berhasil disimpan!");
 }
 
 async function testApiKey() {
@@ -899,12 +844,12 @@ async function testApiKey() {
     const statusMsg = document.getElementById("api-status-msg");
     
     if (!key) {
-        alert("Masukkan API Key terlebih dahulu!");
+        alert("Masukkan API Key!");
         return;
     }
 
     statusMsg.className = "margin-top-sm bold text-sm text-center text-muted";
-    statusMsg.textContent = "Menguji koneksi ke API-Sports...";
+    statusMsg.textContent = "Menguji koneksi...";
 
     try {
         const res = await fetch("https://v3.football.api-sports.io/status", {
@@ -924,7 +869,7 @@ async function testApiKey() {
             const limit = data.response.requests.limit_day;
             const current = data.response.requests.current;
             statusMsg.className = "margin-top-sm bold text-sm text-center text-success";
-            statusMsg.textContent = `Sukses! Koneksi tersambung. Penggunaan limit hari ini: ${current}/${limit}`;
+            statusMsg.textContent = `Sukses! Limit hari ini: ${current}/${limit}`;
         } else {
             throw new Error("Respon tidak valid.");
         }
@@ -934,18 +879,19 @@ async function testApiKey() {
     }
 }
 
+// SYNC SCORE SCRIPT
 async function syncScoreFromApiNow() {
     if (!currentMatchData || !currentMatchData.api_fixture_id) return;
     
     const key = localStorage.getItem("tebak_skor_v2_api_key") || document.getElementById("input-api-key").value.trim();
     if (!key) {
-        alert("API Key tidak ditemukan! Harap masukkan dan simpan API Key di dashboard admin.");
+        alert("API Key tidak ditemukan di dashboard admin!");
         return;
     }
 
     const btn = document.getElementById("btn-sync-now");
     btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Mensinkronisasikan...`;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Sinkronisasi...`;
 
     try {
         const fixtureId = currentMatchData.api_fixture_id;
@@ -963,7 +909,7 @@ async function syncScoreFromApiNow() {
         }
 
         if (!data.response || data.response.length === 0) {
-            throw new Error("Tidak ada data pertandingan ditemukan di API untuk ID fixture tersebut.");
+            throw new Error("Tidak ada fixture ditemukan.");
         }
 
         const matchInfo = data.response[0];
@@ -972,7 +918,6 @@ async function syncScoreFromApiNow() {
         const apiStatus = matchInfo.fixture.status.short;
         const elapsed = matchInfo.fixture.status.elapsed || 0;
 
-        // Map API-Sports status to our simple status: PENDING, LIVE, FINISHED
         let mappedStatus = "PENDING";
         const liveStatuses = ["1H", "HT", "2H", "ET", "BT", "P", "INT"];
         const finishedStatuses = ["FT", "AET", "PEN"];
@@ -986,7 +931,6 @@ async function syncScoreFromApiNow() {
         const scoreA = goalsHome !== null ? goalsHome : 0;
         const scoreB = goalsAway !== null ? goalsAway : 0;
 
-        // Save to Supabase using Admin RPC
         const { error } = await supabaseClient.rpc("admin_update_match", {
             match_id: selectedMatchId,
             val_score_a: scoreA,
@@ -998,14 +942,10 @@ async function syncScoreFromApiNow() {
 
         if (error) throw error;
 
-        // Log last sync
-        document.getElementById("last-sync-time").textContent = `Sinkron terakhir: ${new Date().toLocaleTimeString('id-ID')}`;
-        await refreshActiveViewData();
-        
-        // Notify of values retrieved
-        console.log(`Sync Sukses: ${matchInfo.teams.home.name} ${scoreA} - ${scoreB} ${matchInfo.teams.away.name} (${mappedStatus}, ${elapsed}')`);
+        document.getElementById("last-sync-time").textContent = `Terakhir sinkron: ${new Date().toLocaleTimeString('id-ID')}`;
+        await refreshActivePageData();
     } catch (err) {
-        alert("Gagal sinkronisasi data: " + err.message);
+        alert("Gagal sinkronisasi API: " + err.message);
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-down"></i> Tarik Skor Aktual Sekarang`;
@@ -1016,17 +956,13 @@ function toggleAutoSync(checkbox) {
     if (autoSyncTimer) clearInterval(autoSyncTimer);
 
     if (checkbox.checked) {
-        // Run sync immediately, then set interval
         syncScoreFromApiNow();
         autoSyncTimer = setInterval(() => {
-            // Only sync if the current match is LIVE or PENDING
             if (currentMatchData && (currentMatchData.status === 'LIVE' || currentMatchData.status === 'PENDING')) {
                 syncScoreFromApiNow();
-            } else {
-                console.log("Auto-sync skipped: Match status is FINISHED.");
             }
-        }, 60000); // Poll once every 60 seconds
-        alert("Auto-Sync Aktif! Skor akan diperbarui otomatis setiap 60 detik.");
+        }, 60000);
+        alert("Auto-Sync Aktif! Sinkronisasi otomatis setiap 60 detik.");
     } else {
         alert("Auto-Sync Dinonaktifkan.");
     }
