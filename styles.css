@@ -485,6 +485,7 @@ button {
 .team-logo-img {
     height: 100%;
     width: auto;
+    transform: scale(1.5);
     display: block;
 }
 
