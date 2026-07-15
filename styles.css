@@ -104,6 +104,16 @@ body {
     100% { transform: scale(1.05) translate(1%, 1%); opacity: 1; }
 }
 
+#three-bg-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -3; /* Placed behind everything, grid and glows on top */
+    pointer-events: none;
+}
+
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
     width: 6px;

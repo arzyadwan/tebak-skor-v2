@@ -26,6 +26,7 @@ let scrollInterval = null;
 document.addEventListener("DOMContentLoaded", () => {
     initDeviceId();
     pageId = document.body.id;
+    initThreeBg();
     
     // Load config sessions if admin
     if (pageId === 'page-admin') {
@@ -1092,4 +1093,101 @@ function getRelativeTime(timestamp) {
     if (hours < 24) return `${hours} jam lalu`;
     
     return new Date(timestamp).toLocaleDateString('id-ID');
+}
+
+// Three.js 3D Background Particle Field & Wireframe Sphere
+function initThreeBg() {
+    const canvas = document.getElementById("three-bg-canvas");
+    if (!canvas || typeof THREE === "undefined") return;
+
+    const scene = new THREE.Scene();
+    
+    // Camera
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
+
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    // Particles Geometry
+    const particlesCount = 200;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particlesCount * 3);
+    const velocities = [];
+
+    for (let i = 0; i < particlesCount * 3; i += 3) {
+        positions[i] = (Math.random() - 0.5) * 10;
+        positions[i + 1] = (Math.random() - 0.5) * 10;
+        positions[i + 2] = (Math.random() - 0.5) * 10;
+        
+        velocities.push({
+            x: (Math.random() - 0.5) * 0.003,
+            y: (Math.random() - 0.5) * 0.003,
+            z: (Math.random() - 0.5) * 0.003
+        });
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    // Particle styling (Sky Blue, semi-transparent)
+    const material = new THREE.PointsMaterial({
+        size: 0.04,
+        color: 0x38bdf8,
+        transparent: true,
+        opacity: 0.6,
+        blending: THREE.AdditiveBlending
+    });
+
+    const particles = new THREE.Points(geometry, material);
+    scene.add(particles);
+
+    // Subtle center wireframe sphere (looks like global network or football)
+    const sphereGeometry = new THREE.SphereGeometry(1.8, 12, 12);
+    const sphereMaterial = new THREE.MeshBasicMaterial({
+        color: 0x0ea5e9,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.06
+    });
+    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    scene.add(sphere);
+
+    // Resize Handler
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Animation Loop
+    function animate() {
+        requestAnimationFrame(animate);
+
+        particles.rotation.y += 0.0004;
+        particles.rotation.x += 0.0001;
+        
+        sphere.rotation.y += 0.0015;
+        sphere.rotation.x += 0.0008;
+
+        // Animate particles position
+        const posAttr = geometry.attributes.position;
+        for (let i = 0; i < particlesCount; i++) {
+            const idx = i * 3;
+            posAttr.array[idx] += velocities[i].x;
+            posAttr.array[idx + 1] += velocities[i].y;
+            posAttr.array[idx + 2] += velocities[i].z;
+
+            // Boundary bounce
+            if (Math.abs(posAttr.array[idx]) > 5) velocities[i].x *= -1;
+            if (Math.abs(posAttr.array[idx + 1]) > 5) velocities[i].y *= -1;
+            if (Math.abs(posAttr.array[idx + 2]) > 5) velocities[i].z *= -1;
+        }
+        posAttr.needsUpdate = true;
+
+        renderer.render(scene, camera);
+    }
+
+    animate();
 }
