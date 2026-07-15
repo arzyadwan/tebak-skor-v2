@@ -1223,11 +1223,34 @@ button {
    INFINITE AUTO-SCROLL & MINI TABLE STYLING
    ========================================================================== */
 .predictions-scroll-container {
-    height: 440px; /* Fits exactly 10 rows of 44px */
+    height: 484px; /* Holds header (44px) + 10 rows (44px * 10) */
     overflow: hidden;
     position: relative;
     border-radius: var(--radius-md);
     margin-top: 0.5rem;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+}
+
+.scroll-header {
+    display: flex;
+    align-items: center;
+    height: 44px;
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--border);
+    background-color: var(--card);
+}
+
+.scroll-body-wrapper {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
 }
 
 #predictions-scroll-list {
@@ -1236,22 +1259,40 @@ button {
     width: 100%;
 }
 
-.predictions-scroll-container .leaderboard-table {
-    width: 100%;
-    table-layout: fixed; /* Keep column widths strictly identical during rotations */
+.scroll-row {
+    display: flex;
+    align-items: center;
+    height: 44px;
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background-color: transparent;
+    transition: background-color var(--transition-fast);
 }
 
-/* Hard constraint on row height to align exactly 10 rows */
-.predictions-scroll-container tbody tr {
-    height: 44px !important;
-    max-height: 44px !important;
-}
-
-.predictions-scroll-container tbody td {
-    padding: 0.6rem 1rem !important;
+/* Identical Column Sizing across Header and Rows */
+.col-peserta {
+    flex: 2;
+    font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.col-tebakan {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.col-waktu {
+    flex: 1;
+    text-align: left;
+    color: var(--muted-foreground);
+    font-size: 0.75rem;
 }
 
 /* Mini Table formatting for Top 5 panel */

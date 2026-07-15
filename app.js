@@ -547,7 +547,7 @@ function renderScrollList() {
     listBody.innerHTML = "";
 
     if (localScrollList.length === 0) {
-        listBody.innerHTML = `<tr><td colspan="3" class="text-center text-muted py-4">Belum ada tebakan terdaftar.</td></tr>`;
+        listBody.innerHTML = `<div class="text-center text-muted py-4 w-full">Belum ada tebakan terdaftar.</div>`;
         return;
     }
 
@@ -572,21 +572,21 @@ function renderScrollList() {
             else if (matchType === 'outcome') highlightClass = "match-outcome";
         }
 
-        const tr = document.createElement("tr");
-        if (highlightClass) tr.className = highlightClass;
+        const row = document.createElement("div");
+        row.className = `scroll-row ${highlightClass}`;
 
         const timeStr = new Date(pred.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-        tr.innerHTML = `
-            <td>
-                <div class="participant-name-cell">
-                    <span>${escapeHtml(pred.participant_name)}</span>
-                </div>
-            </td>
-            <td><span class="guess-score-badge">${pred.guess_a} - ${pred.guess_b}</span></td>
-            <td class="text-muted text-xs">${timeStr}</td>
+        row.innerHTML = `
+            <div class="col-peserta">
+                <span>${escapeHtml(pred.participant_name)}</span>
+            </div>
+            <div class="col-tebakan">
+                <span class="guess-score-badge">${pred.guess_a} - ${pred.guess_b}</span>
+            </div>
+            <div class="col-waktu">${timeStr}</div>
         `;
-        listBody.appendChild(tr);
+        listBody.appendChild(row);
     });
 }
 

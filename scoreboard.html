@@ -90,21 +90,16 @@
                         
                         <!-- Fixed Height Auto-scroll container -->
                         <div class="predictions-scroll-container" id="predictions-scroll-container">
-                            <table class="leaderboard-table">
-                                <thead>
-                                    <tr>
-                                        <th>Peserta</th>
-                                        <th>Tebakan Skor</th>
-                                        <th>Waktu Kirim</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="predictions-scroll-list">
-                                    <!-- Dynamic elements scroll via JS -->
-                                    <tr>
-                                        <td colspan="3" class="text-center text-muted py-4">Belum ada tebakan terdaftar.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <div class="scroll-header">
+                                <div class="col-peserta">Peserta</div>
+                                <div class="col-tebakan">Tebakan Skor</div>
+                                <div class="col-waktu">Waktu Kirim</div>
+                            </div>
+                            <div class="scroll-body-wrapper">
+                                <div id="predictions-scroll-list">
+                                    <div class="text-center text-muted py-4 w-full">Belum ada tebakan terdaftar.</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
