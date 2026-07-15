@@ -623,8 +623,8 @@ function renderCharts(scoredPreds) {
                 labels: [`${currentMatchData.team_a_name}`, 'Seri (Draw)', `${currentMatchData.team_b_name}`],
                 datasets: [{
                     data: [homeWins, draws, awayWins],
-                    backgroundColor: ['#10b981', '#27272a', '#f59e0b'],
-                    borderColor: '#18181b',
+                    backgroundColor: ['#38bdf8', '#0c2b4e', '#7dd3fc'],
+                    borderColor: '#081c36',
                     borderWidth: 2,
                     hoverOffset: 4
                 }]
@@ -636,7 +636,7 @@ function renderCharts(scoredPreds) {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            color: '#a1a1aa',
+                            color: '#7dd3fc',
                             font: { family: 'Outfit', size: 11 }
                         }
                     }

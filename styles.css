@@ -1,34 +1,35 @@
 /* ==========================================================================
-   DESIGN SYSTEM - SHADCN ZINC DARK THEME (TEBAK SKOR V2)
+   DESIGN SYSTEM - PREMIUM SKY BLUE THEME (TEBAK SKOR V2)
    ========================================================================== */
 
 :root {
-    /* Shadcn Zinc Color Palette */
-    --background: #09090b;       /* zinc-950 */
-    --foreground: #fafafa;       /* zinc-50 */
-    --card: #18181b;             /* zinc-900 */
-    --card-foreground: #fafafa;
-    --popover: #09090b;
-    --popover-foreground: #fafafa;
-    --primary: #fafafa;          /* zinc-50 */
-    --primary-foreground: #18181b; /* zinc-900 */
-    --secondary: #27272a;        /* zinc-800 */
-    --secondary-foreground: #fafafa;
-    --muted: #27272a;
-    --muted-foreground: #a1a1aa; /* zinc-400 */
-    --accent: #27272a;
-    --accent-foreground: #fafafa;
-    --destructive: #ef4444;      /* red-500 */
-    --destructive-foreground: #fafafa;
-    --border: #27272a;           /* zinc-800 */
-    --input: #27272a;
-    --ring: #d4d4d8;             /* zinc-300 */
+    /* Premium Sky Blue Theme Palette */
+    --background: #020813;       /* Extremely deep navy-sky base */
+    --foreground: #f0f9ff;       /* Very light sky blue-white */
+    --card: rgba(8, 28, 54, 0.7); /* Deep sky-blue card with opacity */
+    --card-foreground: #f0f9ff;
+    --popover: #020813;
+    --popover-foreground: #f0f9ff;
+    --primary: #38bdf8;          /* Vibrant Sky-400 */
+    --primary-foreground: #020813; /* Deep navy contrast */
+    --secondary: #0c2b4e;        /* Dark navy-blue accents */
+    --secondary-foreground: #f0f9ff;
+    --muted: #0c2b4e;
+    --muted-foreground: #7dd3fc; /* Sky-300 secondary text */
+    --accent: #0ea5e9;           /* Sky-500 interactive elements */
+    --accent-foreground: #f0f9ff;
+    --destructive: #f43f5e;
+    --destructive-foreground: #f0f9ff;
+    --border: rgba(56, 189, 248, 0.18); /* Translucent sky blue border */
+    --input: #020813;
+    --ring: #38bdf8;
     
-    /* Neon Accents for watch party atmosphere */
-    --neon-emerald: #10b981;     /* emerald-500 */
-    --neon-sky: #0ea5e9;         /* sky-500 */
-    --neon-gold: #f59e0b;        /* amber-500 */
-    --neon-rose: #f43f5e;        /* rose-500 */
+    /* Neon Accents for sky blue theme */
+    --neon-sky: #38bdf8;         /* Sky-400 glow */
+    --neon-blue: #0ea5e9;        /* Sky-500 secondary glow */
+    --neon-gold: #f59e0b;        /* Amber-500 alert highlights */
+    --neon-emerald: #38bdf8;     /* Standardized to sky-400 */
+    --neon-rose: #f43f5e;
     
     /* Fonts */
     --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -42,7 +43,7 @@
     /* Shadows & Transitions */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
     --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -66,7 +67,7 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-/* Premium Stadium Background Grid */
+/* Rich Stadium Sky-Blue Grid */
 .neon-grid {
     position: fixed;
     top: 0;
@@ -74,28 +75,33 @@ body {
     width: 100%;
     height: 100%;
     background-image: 
-        linear-gradient(rgba(39, 39, 42, 0.15) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(39, 39, 42, 0.15) 1px, transparent 1px);
-    background-size: 50px 50px;
+        linear-gradient(rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
     z-index: -2;
     pointer-events: none;
 }
 
+/* Pulsing Sky Blue Stadium Lights */
 .radial-glow {
     position: fixed;
-    top: -30%;
-    left: -20%;
-    width: 140%;
-    height: 140%;
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.04) 0%, rgba(14, 165, 233, 0.02) 40%, transparent 70%);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.15) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(14, 165, 233, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 50% 120%, rgba(56, 189, 248, 0.18) 0%, transparent 55%),
+        radial-gradient(circle at 50% 50%, #031224 0%, #01060d 100%);
     z-index: -1;
     pointer-events: none;
-    animation: slowGlow 25s infinite alternate ease-in-out;
+    animation: slowGlow 20s infinite alternate ease-in-out;
 }
 
 @keyframes slowGlow {
-    0% { transform: scale(1) translate(0, 0); }
-    100% { transform: scale(1.08) translate(2%, 2%); }
+    0% { transform: scale(1) translate(0, 0); opacity: 0.9; }
+    100% { transform: scale(1.05) translate(1%, 1%); opacity: 1; }
 }
 
 /* Scrollbar Styling */
@@ -117,11 +123,11 @@ body {
 /* Helpers & Utilities */
 .text-center { text-align: center; }
 .justify-center { justify-content: center; }
-.text-neon { color: var(--neon-sky); text-shadow: 0 0 10px rgba(14, 165, 233, 0.3); }
-.text-neon-green { color: var(--neon-emerald); text-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
+.text-neon { color: var(--neon-sky); text-shadow: 0 0 10px rgba(56, 189, 248, 0.35); }
+.text-neon-green { color: var(--neon-sky); text-shadow: 0 0 10px rgba(56, 189, 248, 0.35); }
 .text-neon-gold { color: var(--neon-gold); text-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
 .text-gold { color: var(--neon-gold); }
-.text-success { color: var(--neon-emerald); }
+.text-success { color: var(--neon-sky); }
 .text-orange { color: var(--neon-gold); }
 .text-danger { color: var(--destructive); }
 .text-muted { color: var(--muted-foreground); }
@@ -190,7 +196,7 @@ body {
 }
 
 /* ==========================================================================
-   SHADCN CARD SYSTEM
+   SHADCN CARD SYSTEM (GLASSMORPHISM)
    ========================================================================== */
 .card-glow-wrapper {
     position: relative;
@@ -200,16 +206,19 @@ body {
 }
 
 .glass-card {
-    background-color: var(--card);
+    background-color: rgba(8, 28, 54, 0.75);
     border: 1px solid var(--border);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border-radius: var(--radius-lg);
     padding: 1.5rem;
-    box-shadow: var(--shadow-lg);
-    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.55);
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .glass-card:hover {
-    border-color: rgba(161, 161, 170, 0.4); /* subtle zinc border highlight */
+    border-color: rgba(56, 189, 248, 0.45);
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.15);
 }
 
 .card-header {
