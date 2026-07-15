@@ -1431,6 +1431,90 @@ button {
 }
 
 /* ==========================================================================
+   MOBILE RESPONSIVENESS & MOBILE-FRIENDLY REFINEMENTS
+   ========================================================================== */
+@media (max-width: 600px) {
+    .app-main {
+        padding: 1.2rem 0.75rem;
+    }
+    
+    .glass-card {
+        padding: 1.2rem;
+    }
+    
+    .screen-controls-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.8rem;
+        padding: 0.8rem 1rem !important;
+    }
+    
+    .screen-controls-header .selector-wrapper {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 0.8rem;
+    }
+    
+    .admin-controls-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .admin-top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo-wrapper {
+        width: 68px;
+        height: 68px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .team-name {
+        font-size: 1rem;
+    }
+    
+    .vs-text {
+        font-size: 1.2rem;
+    }
+    
+    .match-info-center {
+        min-width: 120px;
+    }
+    
+    .score-guesser-container {
+        gap: 0.8rem;
+        margin: 1.2rem 0;
+    }
+    
+    .stepper-input {
+        width: 110px;
+    }
+    
+    .btn-step {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .stepper-input input {
+        width: 35px;
+        font-size: 1.15rem;
+    }
+    
+    .score-divider {
+        font-size: 1.8rem;
+        padding-top: 0.5rem;
+    }
+}
+
+/* ==========================================================================
    APP FOOTER
    ========================================================================== */
 .app-footer {
