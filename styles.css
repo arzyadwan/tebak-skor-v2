@@ -1,18 +1,18 @@
 /* ==========================================================================
-   DESIGN SYSTEM - PREMIUM SKY BLUE THEME (TEBAK SKOR V2)
+   DESIGN SYSTEM - SKY BLUE LIGHT/DARK MODE (TEBAK SKOR V2)
    ========================================================================== */
 
 :root {
-    /* Premium Sky Blue Theme Palette */
-    --background: #020813;       /* Extremely deep navy-sky base */
+    /* DEFAULT DARK MODE VALUES (Theme c8cbebb) */
+    --background: #020813;       /* Deep navy-sky base */
     --foreground: #f0f9ff;       /* Very light sky blue-white */
-    --card: rgba(8, 28, 54, 0.7); /* Deep sky-blue card with opacity */
+    --card: rgba(8, 28, 54, 0.75); /* Deep sky-blue card with opacity */
     --card-foreground: #f0f9ff;
     --popover: #020813;
     --popover-foreground: #f0f9ff;
     --primary: #38bdf8;          /* Vibrant Sky-400 */
     --primary-foreground: #020813; /* Deep navy contrast */
-    --secondary: #0c2b4e;        /* Dark navy-blue accents */
+    --secondary: #0c2b4e;        /* Dark navy accents */
     --secondary-foreground: #f0f9ff;
     --muted: #0c2b4e;
     --muted-foreground: #7dd3fc; /* Sky-300 secondary text */
@@ -30,6 +30,14 @@
     --neon-gold: #f59e0b;        /* Amber-500 alert highlights */
     --neon-emerald: #38bdf8;     /* Standardized to sky-400 */
     --neon-rose: #f43f5e;
+
+    /* Background Elements Variables */
+    --grid-color: rgba(56, 189, 248, 0.04);
+    --radial-1: rgba(56, 189, 248, 0.15);
+    --radial-2: rgba(14, 165, 233, 0.12);
+    --radial-3: rgba(56, 189, 248, 0.18);
+    --radial-bg: #031224;
+    --radial-bg-end: #01060d;
     
     /* Fonts */
     --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -45,6 +53,44 @@
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
     --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* LIGHT MODE OVERRIDES */
+body.light {
+    --background: #f0f9ff;       /* Light sky-50 base */
+    --foreground: #0f172a;       /* Slate-900 dark text */
+    --card: rgba(255, 255, 255, 0.85); /* Solid white glassmorphism */
+    --card-foreground: #0f172a;
+    --popover: #ffffff;
+    --popover-foreground: #0f172a;
+    --primary: #0284c7;          /* Sky-600 primary button */
+    --primary-foreground: #ffffff;
+    --secondary: #e0f2fe;        /* Sky-100 secondary */
+    --secondary-foreground: #0369a1;
+    --muted: #e0f2fe;
+    --muted-foreground: #0369a1;  /* Sky-700 secondary text */
+    --accent: #38bdf8;           /* Sky-400 interactive */
+    --accent-foreground: #ffffff;
+    --destructive: #f43f5e;
+    --destructive-foreground: #ffffff;
+    --border: rgba(14, 165, 233, 0.2); /* Soft sky blue border */
+    --input: #ffffff;
+    --ring: #0284c7;
+    
+    /* Neon Accents for light theme */
+    --neon-sky: #0369a1;         /* Sky-700 dark text headers */
+    --neon-blue: #0284c7;
+    --neon-gold: #d97706;        /* Amber-600 gold text */
+    --neon-emerald: #0284c7;
+    --neon-rose: #e11d48;
+
+    /* Background Elements Variables */
+    --grid-color: rgba(14, 165, 233, 0.08);
+    --radial-1: rgba(56, 189, 248, 0.25);
+    --radial-2: rgba(125, 211, 252, 0.2);
+    --radial-3: rgba(224, 242, 254, 0.3);
+    --radial-bg: #e0f2fe;
+    --radial-bg-end: #bae6fd;
 }
 
 /* Global Reset */
@@ -65,9 +111,10 @@ body {
     display: flex;
     flex-direction: column;
     -webkit-font-smoothing: antialiased;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
-/* Rich Stadium Sky-Blue Grid */
+/* Rich Stadium Grid */
 .neon-grid {
     position: fixed;
     top: 0;
@@ -75,14 +122,14 @@ body {
     width: 100%;
     height: 100%;
     background-image: 
-        linear-gradient(rgba(56, 189, 248, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
     background-size: 40px 40px;
     z-index: -2;
     pointer-events: none;
 }
 
-/* Pulsing Sky Blue Stadium Lights */
+/* Pulsing Stadium Lights */
 .radial-glow {
     position: fixed;
     top: 0;
@@ -90,10 +137,10 @@ body {
     width: 100%;
     height: 100%;
     background: 
-        radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.15) 0%, transparent 45%),
-        radial-gradient(circle at 85% 85%, rgba(14, 165, 233, 0.12) 0%, transparent 45%),
-        radial-gradient(circle at 50% 120%, rgba(56, 189, 248, 0.18) 0%, transparent 55%),
-        radial-gradient(circle at 50% 50%, #031224 0%, #01060d 100%);
+        radial-gradient(circle at 15% 15%, var(--radial-1) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, var(--radial-2) 0%, transparent 45%),
+        radial-gradient(circle at 50% 120%, var(--radial-3) 0%, transparent 55%),
+        radial-gradient(circle at 50% 50%, var(--radial-bg) 0%, var(--radial-bg-end) 100%);
     z-index: -1;
     pointer-events: none;
     animation: slowGlow 20s infinite alternate ease-in-out;
@@ -101,7 +148,7 @@ body {
 
 @keyframes slowGlow {
     0% { transform: scale(1) translate(0, 0); opacity: 0.9; }
-    100% { transform: scale(1.05) translate(1%, 1%); opacity: 1; }
+    100% { transform: scale(1.03) translate(0.5%, 0.5%); opacity: 1; }
 }
 
 #three-bg-canvas {
@@ -1333,6 +1380,46 @@ button {
 
 .mini-table tbody tr {
     height: 38px !important;
+}
+
+/* Floating Theme Toggle button */
+.floating-theme-toggle {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 100;
+}
+
+.theme-toggle-btn {
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    color: var(--foreground);
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.theme-toggle-btn:hover {
+    transform: scale(1.08);
+    border-color: var(--primary);
+    background-color: var(--secondary);
+}
+
+/* Adjust standard layout margin if floating toggle overlaps */
+@media (max-width: 600px) {
+    .floating-theme-toggle {
+        top: 0.8rem;
+        right: 0.8rem;
+    }
 }
 
 /* ==========================================================================

@@ -22,8 +22,13 @@ let countdownTimer = null;
 let localScrollList = [];
 let scrollInterval = null;
 
+// Three.js Material Reference
+let threeMaterial = null;
+let threeSphereMaterial = null;
+
 // INIT APPLICATION FOR SPECIFIC PAGE
 document.addEventListener("DOMContentLoaded", () => {
+    initTheme();
     initDeviceId();
     pageId = document.body.id;
     initThreeBg();
@@ -1154,6 +1159,11 @@ function initThreeBg() {
     const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
     scene.add(sphere);
 
+    // Keep global references and initialize colors based on theme
+    threeMaterial = material;
+    threeSphereMaterial = sphereMaterial;
+    updateThreeColors();
+
     // Resize Handler
     window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
@@ -1190,4 +1200,64 @@ function initThreeBg() {
     }
 
     animate();
+}
+
+// ==========================================================================
+// LIGHT & DARK THEME TOGGLE HANDLERS
+// ==========================================================================
+function toggleTheme() {
+    const body = document.body;
+    const isLight = body.classList.toggle("light");
+    localStorage.setItem("tebak_skor_v2_theme", isLight ? "light" : "dark");
+    
+    updateThemeIcons();
+    updateThreeColors();
+}
+
+function initTheme() {
+    const savedTheme = localStorage.getItem("tebak_skor_v2_theme") || "dark";
+    if (savedTheme === "light") {
+        document.body.classList.add("light");
+    } else {
+        document.body.classList.remove("light");
+    }
+    updateThemeIcons();
+    // Wait a brief delay to ensure WebGL/Three materials are initialized
+    setTimeout(updateThreeColors, 400);
+}
+
+function updateThemeIcons() {
+    const isLight = document.body.classList.contains("light");
+    const icons = document.querySelectorAll(".icon-theme");
+    icons.forEach(icon => {
+        if (isLight) {
+            icon.className = "fa-solid fa-sun icon-theme text-orange";
+        } else {
+            icon.className = "fa-solid fa-moon icon-theme";
+        }
+    });
+}
+
+function updateThreeColors() {
+    if (!threeMaterial || !threeSphereMaterial) return;
+    const isLight = document.body.classList.contains("light");
+    
+    if (isLight) {
+        // Sky Blue particles for light mode visibility
+        threeMaterial.color.setHex(0x0ea5e9);
+        threeMaterial.opacity = 0.55;
+        // Darker blue wireframe sphere
+        threeSphereMaterial.color.setHex(0x0284c7);
+        threeSphereMaterial.opacity = 0.08;
+    } else {
+        // Neon Sky Blue particles for dark mode
+        threeMaterial.color.setHex(0x38bdf8);
+        threeMaterial.opacity = 0.6;
+        // Subtle neon blue sphere
+        threeSphereMaterial.color.setHex(0x0ea5e9);
+        threeSphereMaterial.opacity = 0.06;
+    }
+    
+    threeMaterial.needsUpdate = true;
+    threeSphereMaterial.needsUpdate = true;
 }
