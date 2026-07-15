@@ -21,6 +21,8 @@ let autoSyncTimer = null;
 let countdownTimer = null;
 let localScrollList = [];
 let scrollInterval = null;
+let clientIpAddress = null;
+let serverVotedData = null;
 
 // Three.js Material Reference
 let threeMaterial = null;
@@ -137,6 +139,45 @@ async function fetchMatchPredictions(matchId) {
     }
 }
 
+async function getClientIp() {
+    try {
+        const res = await fetch("https://api.ipify.org?format=json");
+        const data = await res.json();
+        return data.ip;
+    } catch (err) {
+        console.error("Gagal mendapatkan IP address:", err);
+        return null;
+    }
+}
+
+async function checkUserHasVoted(matchId, ipAddress) {
+    if (!matchId) return null;
+    try {
+        let query = supabaseClient
+            .from("tebak_skor_v2_predictions")
+            .select("*")
+            .eq("match_id", matchId);
+            
+        if (ipAddress) {
+            // Check if there is already a prediction with either the same IP OR same device_id
+            query = query.or(`ip_address.eq.${ipAddress},device_id.eq.${deviceId}`);
+        } else {
+            query = query.eq("device_id", deviceId);
+        }
+        
+        const { data, error } = await query;
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+            return data[0];
+        }
+        return null;
+    } catch (err) {
+        console.error("Gagal memeriksa status tebakan:", err.message);
+        return null;
+    }
+}
+
 async function refreshActivePageData() {
     await fetchMatches();
     if (!selectedMatchId && activeMatches.length > 0) {
@@ -146,6 +187,17 @@ async function refreshActivePageData() {
     if (selectedMatchId) {
         currentMatchData = activeMatches.find(m => m.id == selectedMatchId);
         predictionsList = await fetchMatchPredictions(selectedMatchId);
+        
+        // Fetch client IP and database vote status if on participant view
+        if (pageId === 'page-participant') {
+            if (!clientIpAddress) {
+                clientIpAddress = await getClientIp();
+            }
+            serverVotedData = await checkUserHasVoted(selectedMatchId, clientIpAddress);
+            if (serverVotedData) {
+                saveVotedPrediction(selectedMatchId, serverVotedData);
+            }
+        }
         
         if (pageId === 'page-participant') {
             renderParticipantView();
@@ -227,7 +279,7 @@ function renderParticipantView() {
     const isKickoffPassed = new Date() >= new Date(currentMatchData.kickoff_time);
     const isLocked = status !== 'PENDING' || isKickoffPassed;
 
-    const votedData = getVotedPrediction(selectedMatchId);
+    const votedData = serverVotedData || getVotedPrediction(selectedMatchId);
 
     if (votedData) {
         formCard.style.display = "none";
@@ -315,6 +367,11 @@ async function submitPrediction(e) {
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...`;
 
     try {
+        // Double check we have resolved client IP
+        if (!clientIpAddress) {
+            clientIpAddress = await getClientIp();
+        }
+
         const { data, error } = await supabaseClient
             .from("tebak_skor_v2_predictions")
             .insert([{
@@ -322,13 +379,18 @@ async function submitPrediction(e) {
                 participant_name: nickname,
                 guess_a: guessA,
                 guess_b: guessB,
-                device_id: deviceId
+                device_id: deviceId,
+                ip_address: clientIpAddress
             }])
             .select();
 
         if (error) {
             if (error.code === '23505') {
-                throw new Error("Nama panggilan ini sudah digunakan. Harap gunakan nama lain!");
+                if (error.message.includes('unique_match_ip') || error.message.includes('ip_address')) {
+                    throw new Error("Anda (IP address Anda) sudah mengirimkan tebakan untuk pertandingan ini!");
+                } else {
+                    throw new Error("Nama panggilan ini sudah digunakan. Harap gunakan nama lain!");
+                }
             }
             throw error;
         }
