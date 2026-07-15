@@ -31,6 +31,10 @@
     --neon-emerald: #38bdf8;     /* Standardized to sky-400 */
     --neon-rose: #f43f5e;
 
+    /* Card hover variables */
+    --border-hover: rgba(56, 189, 248, 0.45);
+    --shadow-hover: rgba(56, 189, 248, 0.15);
+
     /* Background Elements Variables */
     --grid-color: rgba(56, 189, 248, 0.04);
     --radial-1: rgba(56, 189, 248, 0.15);
@@ -83,6 +87,10 @@ body.light {
     --neon-gold: #d97706;        /* Amber-600 gold text */
     --neon-emerald: #0284c7;
     --neon-rose: #e11d48;
+
+    /* Card hover variables */
+    --border-hover: rgba(14, 165, 233, 0.45);
+    --shadow-hover: rgba(14, 165, 233, 0.1);
 
     /* Background Elements Variables */
     --grid-color: rgba(14, 165, 233, 0.08);
@@ -263,19 +271,19 @@ body {
 }
 
 .glass-card {
-    background-color: rgba(8, 28, 54, 0.75);
+    background-color: var(--card);
     border: 1px solid var(--border);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-radius: var(--radius-lg);
     padding: 1.5rem;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.55);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
     transition: background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .glass-card:hover {
-    border-color: rgba(56, 189, 248, 0.45);
-    box-shadow: 0 0 25px rgba(56, 189, 248, 0.15);
+    border-color: var(--border-hover);
+    box-shadow: 0 0 25px var(--shadow-hover);
 }
 
 .card-header {
