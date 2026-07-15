@@ -150,22 +150,15 @@ async function getClientIp() {
     }
 }
 
-async function checkUserHasVoted(matchId, ipAddress) {
+async function checkUserHasVoted(matchId) {
     if (!matchId) return null;
     try {
-        let query = supabaseClient
+        const { data, error } = await supabaseClient
             .from("tebak_skor_v2_predictions")
             .select("*")
-            .eq("match_id", matchId);
+            .eq("match_id", matchId)
+            .eq("device_id", deviceId);
             
-        if (ipAddress) {
-            // Check if there is already a prediction with either the same IP OR same device_id
-            query = query.or(`ip_address.eq.${ipAddress},device_id.eq.${deviceId}`);
-        } else {
-            query = query.eq("device_id", deviceId);
-        }
-        
-        const { data, error } = await query;
         if (error) throw error;
         
         if (data && data.length > 0) {
@@ -193,7 +186,7 @@ async function refreshActivePageData() {
             if (!clientIpAddress) {
                 clientIpAddress = await getClientIp();
             }
-            serverVotedData = await checkUserHasVoted(selectedMatchId, clientIpAddress);
+            serverVotedData = await checkUserHasVoted(selectedMatchId);
             if (serverVotedData) {
                 saveVotedPrediction(selectedMatchId, serverVotedData);
             }
@@ -386,11 +379,7 @@ async function submitPrediction(e) {
 
         if (error) {
             if (error.code === '23505') {
-                if (error.message.includes('unique_match_ip') || error.message.includes('ip_address')) {
-                    throw new Error("Anda (IP address Anda) sudah mengirimkan tebakan untuk pertandingan ini!");
-                } else {
-                    throw new Error("Nama panggilan ini sudah digunakan. Harap gunakan nama lain!");
-                }
+                throw new Error("Nama panggilan ini sudah digunakan. Harap gunakan nama lain!");
             }
             throw error;
         }
