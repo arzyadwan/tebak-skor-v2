@@ -1229,8 +1229,7 @@ button {
 }
 
 .predictions-scroll-container {
-    flex: 1;
-    min-height: 380px;
+    height: 704px; /* Holds header (44px) + 15 rows (44px * 15) */
     overflow: hidden;
     position: relative;
     border-radius: var(--radius-md);
