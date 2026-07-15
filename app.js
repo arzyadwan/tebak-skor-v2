@@ -167,7 +167,7 @@ async function checkUserHasVoted(matchId) {
         return null;
     } catch (err) {
         console.error("Gagal memeriksa status tebakan:", err.message);
-        return null;
+        return undefined;
     }
 }
 
@@ -189,6 +189,9 @@ async function refreshActivePageData() {
             serverVotedData = await checkUserHasVoted(selectedMatchId);
             if (serverVotedData) {
                 saveVotedPrediction(selectedMatchId, serverVotedData);
+            } else if (serverVotedData === null) {
+                // Database successfully confirmed no vote exists -> reset local cache
+                removeVotedPrediction(selectedMatchId);
             }
         }
         
@@ -406,6 +409,11 @@ function getVotedPrediction(matchId) {
     const key = `tebak_skor_v2_voted_${matchId}`;
     const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : null;
+}
+
+function removeVotedPrediction(matchId) {
+    const key = `tebak_skor_v2_voted_${matchId}`;
+    localStorage.removeItem(key);
 }
 
 function sharePrediction() {
