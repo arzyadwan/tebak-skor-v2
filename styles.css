@@ -1222,8 +1222,15 @@ button {
 /* ==========================================================================
    INFINITE AUTO-SCROLL & MINI TABLE STYLING
    ========================================================================== */
+.glass-card.h-full {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
 .predictions-scroll-container {
-    height: 484px; /* Holds header (44px) + 10 rows (44px * 10) */
+    flex: 1;
+    min-height: 380px;
     overflow: hidden;
     position: relative;
     border-radius: var(--radius-md);

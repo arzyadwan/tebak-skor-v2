@@ -41,6 +41,13 @@ document.addEventListener("DOMContentLoaded", () => {
     setInterval(() => {
         refreshActivePageData();
     }, 5000);
+
+    // Recalculate scrolling rows on window resize
+    window.addEventListener("resize", () => {
+        if (pageId === 'page-scoreboard') {
+            initPredictionsScroll();
+        }
+    });
 });
 
 // ==========================================================================
@@ -504,6 +511,14 @@ function renderPublicView() {
     renderActivityTicker(predictionsList);
 }
 
+function calculateVisibleRows() {
+    const wrapper = document.querySelector(".scroll-body-wrapper");
+    if (!wrapper) return 10; // Default fallback if not rendered yet
+    const rowHeight = 44; // Defined row height in styles.css
+    const count = Math.floor(wrapper.clientHeight / rowHeight);
+    return count > 0 ? count : 10;
+}
+
 function initPredictionsScroll() {
     const listBody = document.getElementById("predictions-scroll-list");
     if (!listBody) return;
@@ -513,9 +528,10 @@ function initPredictionsScroll() {
         scrollInterval = null;
     }
 
-    renderScrollList();
+    const visibleRows = calculateVisibleRows();
+    renderScrollList(visibleRows);
 
-    if (localScrollList.length <= 10) {
+    if (localScrollList.length <= visibleRows) {
         listBody.style.transform = "none";
         return;
     }
@@ -526,12 +542,13 @@ function initPredictionsScroll() {
         listBody.style.transform = "translateY(-44px)"; // shift up by 1 row height (44px)
 
         setTimeout(() => {
-            if (localScrollList.length > 10) {
+            const currentVisible = calculateVisibleRows();
+            if (localScrollList.length > currentVisible) {
                 // Shift first item to end
                 const first = localScrollList.shift();
                 localScrollList.push(first);
                 // Re-render
-                renderScrollList();
+                renderScrollList(currentVisible);
             }
             // Reset transform instantly
             listBody.style.transition = "none";
@@ -540,7 +557,7 @@ function initPredictionsScroll() {
     }, 3000);
 }
 
-function renderScrollList() {
+function renderScrollList(visibleRows) {
     const listBody = document.getElementById("predictions-scroll-list");
     if (!listBody) return;
 
@@ -551,8 +568,13 @@ function renderScrollList() {
         return;
     }
 
-    // Render 11 items (10 visible + 1 hidden at bottom to scroll in)
-    const itemsToRender = localScrollList.slice(0, 11);
+    // Default count if not supplied
+    if (visibleRows === undefined) {
+        visibleRows = calculateVisibleRows();
+    }
+
+    // Render visibleRows + 1 (the extra 1 hides below, sliding in during scroll)
+    const itemsToRender = localScrollList.slice(0, visibleRows + 1);
     const status = currentMatchData.status;
     const scoreA = currentMatchData.score_a;
     const scoreB = currentMatchData.score_b;
